@@ -1,7 +1,7 @@
 import { AxiosResponse, default as axios } from 'axios';
 import * as cheerio from 'cheerio';
 import * as fs from 'fs';
-import * as db from './db_client.js';
+import * as db from '../general/postgres_client.js';
 
 // read config
 const config = JSON.parse(fs.readFileSync('./config/crawler-config.json', 'utf8'));

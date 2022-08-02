@@ -2,7 +2,7 @@ import pg from 'pg';
 import * as fs from 'fs';
 const { Pool } = pg;
 
-const config = JSON.parse(fs.readFileSync('./config/postgre-config.json', 'utf8'));
+const config = JSON.parse(fs.readFileSync('./config/postgres-config.json', 'utf8'));
 const pool = new Pool({
     user: config.user ?? 'knot',
     host: config.host ?? 'localhost',
@@ -52,4 +52,12 @@ export function push(host:Host) {
     {
         if (err) throw err;
     });
+}
+
+export async function get() {
+    return (await pool.query('SELECT title, addr, contents FROM hosts')).rows;
+}
+
+export async function search(query:string) {
+    return (await pool.query(`SELECT title, addr, contents FROM hosts WHERE title LIKE '%${query}%' OR contents LIKE '%${query}%'`)).rows;
 }
