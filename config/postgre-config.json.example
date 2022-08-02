@@ -1,0 +1,7 @@
+{
+    "user": "knot",
+    "host": "localhost",
+    "database": "knot",
+    "password": "knot",
+    "port": 5432
+}
