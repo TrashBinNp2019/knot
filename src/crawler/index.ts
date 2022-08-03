@@ -114,7 +114,6 @@ async function crawl(targets:string[], depth:number = -1) {
             console.log(`- Detected ${new_targets.length} new targets`);
         }
         if (new_targets.length < TARGETS_CAP) {
-            // console.log(`generating ${TARGETS_CAP - new_targets.length} new targets`);
             new_targets = [...new_targets, ...Array(TARGETS_CAP - new_targets.length).fill(0).map(() => generateIp())];
         } else {
             console.log('- Too many targets detected, dropping');
@@ -139,7 +138,7 @@ function inspect(res: AxiosResponse<any, any>, source: string, targets: string[]
     
     // Check source
     if (source.length > 120) {
-        console.log('- Source too long!');
+        console.log('- A source is too long!');
         return;
     }
 

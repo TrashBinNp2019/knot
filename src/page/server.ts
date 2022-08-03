@@ -2,12 +2,32 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import * as db from '../general/postgres_client.js';
 import * as fs from 'fs';
+import helmet from 'helmet';
 
 const config = JSON.parse(fs.readFileSync('./config/page-config.json', 'utf8'));
 const app = express();
 const port = config.port ?? 3000;
 
-app.use(express.static('src/page/static'));
+if (process.env.NODE_ENV !== 'dev') {
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: [
+                    "'self'",
+                    "'unsafe-inline'",
+                    "https://unpkg.com/react@18/", 
+                    "https://unpkg.com/react-dom@18/",
+                    "https://unpkg.com/@babel/",
+                ],
+            },
+        }
+    }));
+    app.use(express.static('build/page/static'));
+} else {
+    console.log('- Running in dev mode');
+    app.use(express.static('src/page/static'));
+}
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/api/search', async (req, res) => {
@@ -21,5 +41,5 @@ db.test().then(err => {
     }
 
     app.listen(port);
-    console.log(`Server started on port ${port}`);
+    console.log(`- Server started on port ${port}`);
 });

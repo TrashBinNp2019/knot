@@ -3,11 +3,15 @@ import * as fs from 'fs';
 const { Pool } = pg;
 
 const config = JSON.parse(fs.readFileSync('./config/postgres-config.json', 'utf8'));
+if (config.password === undefined) {
+    console.log('- Postgres password not found in postgres-config.json');
+    process.exit(1);
+}
 const pool = new Pool({
     user: config.user ?? 'knot',
     host: config.host ?? 'localhost',
     database: config.database ?? 'knot',
-    password: config.password ?? 'knot',
+    password: config.password,
     port: config.port ?? 5432,
 });
 
@@ -46,6 +50,9 @@ export async function test() {
 }
 
 export function push(host:Host) {
+    host.title = host.title.replace(/'/g, '');
+    host.addr = host.addr.replace(/'/g, '');
+    host.contents = host.contents.replace(/'/g, '');
     pool.query(
         `INSERT INTO hosts (title, addr, contents) VALUES ('${host.title}', '${host.addr}', '${host.contents}')`, 
         (err, res) => 
@@ -59,5 +66,6 @@ export async function get() {
 }
 
 export async function search(query:string) {
+    query = query.replace(/'/g, '');
     return (await pool.query(`SELECT title, addr, contents FROM hosts WHERE title LIKE '%${query}%' OR contents LIKE '%${query}%'`)).rows;
 }
