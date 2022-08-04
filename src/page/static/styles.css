@@ -1,15 +1,15 @@
 .resultBox {
-    background-color: #fff;
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin: 10px 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin: 10px 0;
 }
 
 .searchBox {
-    background-color: #fff;
-    padding: 10px;
-    margin: 10px 0;
-    width: 95%;
-    display: flex;
-    justify-content: center;
+  background-color: #fff;
+  padding: 10px;
+  margin: 10px 0;
+  width: 95%;
+  display: flex;
+  justify-content: center;
 }

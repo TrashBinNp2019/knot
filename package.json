@@ -6,9 +6,9 @@
   "main": "build/search/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "crawler": "node build/crawler/index.js",
+    "crawler": "node build/crawler/main.js",
     "page": "node build/page/server.js",
-    "crawler-dev": "set NODE_ENV=dev&& ts-node-esm src/crawler/index.ts",
+    "crawler-dev": "set NODE_ENV=dev&& ts-node-esm src/crawler/main.ts",
     "page-dev": "set NODE_ENV=dev&& ts-node-esm src/page/server.ts",
     "build": "node src/build-tools/pre.js && tsc && ncp src/page/static/ build/page/static && babel --presets @babel/preset-react build/page/static -d build/page/static && node src/build-tools/post.js"
   },
@@ -38,6 +38,7 @@
     "cheerio": "^1.0.0-rc.12",
     "express": "^4.18.1",
     "helmet": "^5.1.1",
-    "pg": "^8.7.3"
+    "pg": "^8.7.3",
+    "socket.io": "^4.5.1"
   }
 }
