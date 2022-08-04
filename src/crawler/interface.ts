@@ -1,20 +1,20 @@
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import * as config from "./config.js";
 
 export const Events = {
    log: 'log', 
    examined: 'examined',
    valid: 'valid',
+   cap: 'cap',
 }
 
-export function init(port:number) {
+export function init() {
   let examined_total = 0;
   let valid_total = 0;
   let examined_prev = new Date();
-  let valid_prev = new Date();
   let examined_pm = 0;
-  let valid_pm = 0;
 
   const app = express();
 
@@ -24,8 +24,13 @@ export function init(port:number) {
   const io = new Server(httpServer);
   
   io.on("connection", (socket) => {
-    socket.emit(Events.examined, examined_total);
+    socket.emit(Events.examined, examined_total, examined_pm);
     socket.emit(Events.valid, valid_total);
+    socket.emit(Events.cap, config.targetsCap());
+
+    socket.on('cap', (count) => {
+      io.emit(Events.cap, config.targetsCap(count));
+    });
   });
 
   const emit = (event:string, ...args:any[]) => {
@@ -52,10 +57,12 @@ export function init(port:number) {
         return;
       }
       case Events.valid: {
-        valid_pm = calculatePerMinute(valid_prev, valid_pm, args[0]);
         valid_total += args[0];
-        valid_prev = new Date();
-        io.emit('valid', valid_total, valid_pm);
+        io.emit('valid', valid_total);
+        return;
+      }
+      case Events.cap: {
+        io.emit('cap', args[0]);
         return;
       }
     }
@@ -63,15 +70,15 @@ export function init(port:number) {
     throw new Error('Unknown event: ' + event);
   }
 
-  httpServer.listen(port);
-  return emit;
+  httpServer.listen(config.ifacePort());
+  return { emit };
 }
 
 function calculatePerMinute(prev:Date, prevRate:number, count:number) {
   const now = new Date();
   let diff = now.getTime() - prev.getTime();
-  if (diff < 5) {
-    diff = 5
+  if (diff < 10) {
+    diff = 10
   }
   // console.log(prevRate, diff, count / diff * 1000 * 60, (prevRate * 100 + (count / (diff / 1000 / 60))) / 101);
   if (prevRate === 0) {

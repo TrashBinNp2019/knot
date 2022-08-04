@@ -1,40 +1,9 @@
 import { AxiosResponse, default as axios } from 'axios';
 import * as cheerio from 'cheerio';
-import * as fs from 'fs';
 import { Client, Host } from '../general/abstract_client.js';
 import { Events } from './interface.js';
+import * as config from './config.js';
 
-const config = JSON.parse(fs.readFileSync('./config/crawler-config.json', 'utf8'));
-let timeout:number;
-if (config.request_timeout !== undefined) {
-  let set = false;
-  if (typeof(config.request_timeout) === 'number') {
-    if (timeout >= 100) {
-      timeout = config.request_timeout;
-      set = true;
-    } else {
-      timeout = config.request_timeout * 1000;
-      set = true;
-    }
-  } 
-  
-  if (typeof(config.request_timeout) === 'string') {
-    if (/^\d+ms$/.test(config.request_timeout)) {
-      timeout = parseInt(config.request_timeout.substring(0, config.request_timeout.length - 2));       
-      set = true;
-    } 
-    if (/^\d+s$/.test(config.request_timeout)) {
-      timeout = parseInt(config.request_timeout.substring(0, config.request_timeout.length - 1)) * 1000;       
-      set = true;
-    }
-  }
-  
-  if (!set) {
-    log('- Invalid request_timeout');
-  }
-}
-const TIMEOUT = timeout ?? 3000;
-const TARGETS_CAP = config.targets_cap ?? 5000;
 let targets:string[] = [];
 let callbacks:Map<string, ((...args:any) => void)[]> = new Map();
 for (const key in Events) {
@@ -101,7 +70,7 @@ export async function crawl(targets:string[], db:Client, depth:number = -1) {
     });
     let promises = targets.map(async (target) => {
       try {
-        let response = await axios.get(target, { timeout: TIMEOUT });
+        let response = await axios.get(target, { timeout: config.timeout() });
         return { res: response, target: target };
       }
       catch (e:any) {
@@ -132,11 +101,11 @@ export async function crawl(targets:string[], db:Client, depth:number = -1) {
     if (new_targets.length !== 0) {
       log(`Detected ${new_targets.length} new targets`);
     }
-    if (new_targets.length < TARGETS_CAP) {
-      new_targets = [...new_targets, ...Array(TARGETS_CAP - new_targets.length).fill(0).map(() => generateIp())];
+    if (new_targets.length < config.targetsCap()) {
+      new_targets = [...new_targets, ...Array(config.targetsCap() - new_targets.length).fill(0).map(() => generateIp())];
     } else {
       log('Too many targets detected, dropping');
-      new_targets = Array(TARGETS_CAP).fill(0).map(() => generateIp());
+      new_targets = Array(config.targetsCap()).fill(0).map(() => generateIp());
     }
     examined(targets.length);
     await crawl(new_targets, db, depth === -1? -1 : depth - 1);
@@ -203,7 +172,7 @@ export function inspect(res: AxiosResponse<any, any>, source: string, targets: s
       }
     });
   });
-  
+
   log({ title: title, addr: source, contents_length: contents.length });
   db.push({ title: title, addr: source, contents: contents});
   valid();

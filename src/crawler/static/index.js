@@ -1,10 +1,12 @@
 $(document).ready(function() {
   let examined_total = 0;
   let valid_total = 0;
+  let rate = 0;
   let log_count = 0;
+  let prev_cap = 0;
 
   function updateSuccess() {
-    const rate = valid_total === 0? 0 : valid_total / examined_total;
+    rate = valid_total === 0? 0 : valid_total / examined_total;
     if (rate === 0) {
       $('#success-rate').text('0');
     } else {
@@ -39,10 +41,28 @@ $(document).ready(function() {
     updateSuccess();
   });
 
-  socket.on('valid', function(total, pm) {
+  socket.on('valid', function(total) {
     valid_total = total;
     $('#valid-total').text(valid_total);
-    $('#vpm').text(parseInt(pm, 0));
+    let vpm = rate * parseInt($('#epm').text(), 0);
+    $('#vpm').text(rate > 1 || rate < 0.1? parseInt(rate) : parseFloat(rate).toFixed(1));
     updateSuccess();
+  });
+
+  socket.on('cap', (val) => {
+    prev_cap = val;
+    $('#update-cap').attr('disabled', 'true');
+    $('#cap').attr('value', val);
+  });
+
+  $('#cap').change(function() {
+    $('#update-cap').attr('disabled', prev_cap === $('#cap').val());
+  });
+
+  $('#update-cap').click(function() {
+    let val = $('#cap').val();
+    val = parseInt(val, prev_cap);
+    socket.emit('cap', val);
+    $('#update-cap').attr('disabled', 'true');
   });
 });
