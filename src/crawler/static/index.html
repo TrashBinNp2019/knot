@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Crawler Web Interface</title>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+  <script id="babel" crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script id="main" type="text/babel" src="index.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="status-box">
+    <h3>
+      <span id="epm">0</span> per minute examined <br /> <span id="vpm">0</span> per minute valid
+    </h3>
+    <h3>
+      Examined total: <span id="examined-total">0</span> <br />
+      Valid total: <span id="valid-total">0</span> <br />
+      Success rate: <span id="success-rate">0</span>%
+    </h3>
+
+    <div class="controls-box">
+      <p>Targets per scan:</p> 
+      <input type="number" id="cap" placeholder="100" />
+      <button id="update-cap">Update</button>
+      <p>Controls</p>
+      <button class="control-btn", id="pause">Pause</button>
+    </div>
+  </div>
+  
+  <div class="logs-box">
+    <ul class="logs">
+    </ul>
+  </div>
+</body>  
+</html>

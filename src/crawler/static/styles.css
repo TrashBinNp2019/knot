@@ -1,0 +1,15 @@
+p {
+  margin-bottom: 1ex;
+}
+
+.logs-box {
+  background-color: #f8f8f8;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  max-width: 120ex;
+  overflow: hidden;
+}
+
+.status-box {
+  padding: 3ex;
+}
