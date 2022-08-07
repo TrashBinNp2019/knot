@@ -8,9 +8,10 @@ export const Events = {
    examined: 'examined',
    valid: 'valid',
    cap: 'cap',
+   pause: 'pause',
 }
 
-export function init() {
+export function init(state:() => { paused:boolean }) {
   let examined_total = 0;
   let valid_total = 0;
   let examined_prev = new Date();
@@ -18,19 +19,42 @@ export function init() {
 
   const app = express();
 
-  app.use(express.static('src/crawler/static'));
+  app.use(express.static((process.env.NODE_ENV === 'dev'? 'src' : 'build') + '/crawler/static'));
 
   const httpServer = createServer(app);
   const io = new Server(httpServer);
+  const callbacks = new Map<string, ((...args:any) => void)[]>();
+
+  const on = (event:string, listener:(...args:any) => void) => {
+    if (!Events[event]) {
+      throw new Error('Unknown event: ' + event);
+    }
+
+    callbacks.set(event, callbacks.get(event) || []);
+    callbacks.get(event).push(listener);
+  }
   
   io.on("connection", (socket) => {
     socket.emit(Events.examined, examined_total, examined_pm);
     socket.emit(Events.valid, valid_total);
     socket.emit(Events.cap, config.targetsCap());
+    socket.emit(Events.pause, state().paused);
 
     socket.on('cap', (count) => {
       io.emit(Events.cap, config.targetsCap(count));
     });
+
+    socket.on('pause', () => {
+      examined_prev = new Date();      
+    });
+
+    for (const key in Events) {
+      socket.on(key, (...args:any[]) => {
+        if (callbacks.get(key) !== undefined) {
+          callbacks.get(key).forEach(fun => fun(...args));
+        }
+      });
+    }
   });
 
   const emit = (event:string, ...args:any[]) => {
@@ -65,13 +89,17 @@ export function init() {
         io.emit('cap', args[0]);
         return;
       }
+      case Events.pause: {
+        io.emit('pause', args[0]);
+        return;
+      }
     }
 
     throw new Error('Unknown event: ' + event);
   }
 
   httpServer.listen(config.ifacePort());
-  return { emit };
+  return { emit, on };
 }
 
 function calculatePerMinute(prev:Date, prevRate:number, count:number) {

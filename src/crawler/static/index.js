@@ -55,6 +55,12 @@ $(document).ready(function() {
     $('#cap').attr('value', val);
   });
 
+  socket.on('pause', (flag) => {
+    $('#pause').text(flag? 'Resume' : 'Pause');
+    $('#control-btn').attr('disabled', false);
+  })
+
+
   $('#cap').change(function() {
     $('#update-cap').attr('disabled', prev_cap === $('#cap').val());
   });
@@ -64,5 +70,11 @@ $(document).ready(function() {
     val = parseInt(val, prev_cap);
     socket.emit('cap', val);
     $('#update-cap').attr('disabled', 'true');
+  });
+
+  $('#pause').click(() => {
+    socket.emit('pause');
+    $('#pause').text('...');
+    $('#control-btn').attr('disabled', 'true');
   });
 });

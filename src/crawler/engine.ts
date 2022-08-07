@@ -4,7 +4,9 @@ import { Client, Host } from '../general/abstract_client.js';
 import { Events } from './interface.js';
 import * as config from './config.js';
 
-let targets:string[] = [];
+let paused = false;
+let pauseRequested = false;
+
 let callbacks:Map<string, ((...args:any) => void)[]> = new Map();
 for (const key in Events) {
   callbacks.set(key, []);
@@ -21,6 +23,17 @@ function examined(count: number) {
 
 function valid() {
   callbacks.get(Events.valid).forEach(callback => callback(1));
+}
+
+function pause() {
+  callbacks.get(Events.pause).forEach(callback => callback(paused));
+}
+
+export function isPaused(flag?:boolean) {
+  if (flag !== undefined) {
+    pauseRequested = flag;
+  }
+  return paused;
 }
 
 /**
@@ -55,12 +68,45 @@ function generateIp():string {
   return `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
 }
 
+export async function start(db:Client, targets:string[] = [], repetitions:number = -1) {
+  if (paused) {
+    log('Resuming');
+    paused = false;
+    pause();
+  }
+
+  while (repetitions !== 0 && !pauseRequested) {
+    let new_targets = await crawl(targets, db);
+
+    if (new_targets.length !== 0) {
+      log(`Detected ${new_targets.length} new targets`);
+    }
+    if (new_targets.length < config.targetsCap()) {
+      new_targets = [...new_targets, ...Array(config.targetsCap() - new_targets.length).fill(0).map(() => generateIp())];
+    } else {
+      log('Too many targets detected, dropping');
+      new_targets = Array(config.targetsCap()).fill(0).map(() => generateIp());
+    }
+    examined(targets.length);
+
+    targets = new_targets;
+  }
+
+  if (pauseRequested) {
+    log('Paused');
+    paused = true;
+    pauseRequested = false;
+    pause();
+  }
+  return targets;
+}
+
 /**
 * Recursively crawl given targets and any discovered ones.
 * @param targets Array of targets to crawl
-* @param depth Number of recusive calls to perform. -1 for unlimited
+* @param db Database client
 */
-export async function crawl(targets:string[], db:Client, depth:number = -1) {
+export async function crawl(targets:string[], db:Client) {
   let new_targets:string[] = [];
   try {
     targets = targets.map(target => {
@@ -97,19 +143,8 @@ export async function crawl(targets:string[], db:Client, depth:number = -1) {
   } catch (e:any) {
     log(e.code ?? e.message);
   }
-  if (depth === -1 || depth > 1) {
-    if (new_targets.length !== 0) {
-      log(`Detected ${new_targets.length} new targets`);
-    }
-    if (new_targets.length < config.targetsCap()) {
-      new_targets = [...new_targets, ...Array(config.targetsCap() - new_targets.length).fill(0).map(() => generateIp())];
-    } else {
-      log('Too many targets detected, dropping');
-      new_targets = Array(config.targetsCap()).fill(0).map(() => generateIp());
-    }
-    examined(targets.length);
-    await crawl(new_targets, db, depth === -1? -1 : depth - 1);
-  }
+
+  return new_targets;
 }
 
 /**

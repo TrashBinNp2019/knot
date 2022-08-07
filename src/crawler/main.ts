@@ -3,6 +3,8 @@ import * as engine from './engine.js';
 import * as iface from './interface.js';
 import * as config from './config.js';
 
+let targets:string[] = [];
+
 db.test().then((err) => {
   if (err) {
     console.log('- DB error:', err.message);
@@ -10,7 +12,9 @@ db.test().then((err) => {
   }
 
   if (config.useWebIface()) {
-    const server = iface.init();
+    const server = iface.init(() => ({
+      paused: engine.isPaused(),
+    }));
 
     engine.on('log', (...args:any[]) => {
       server.emit(iface.Events.log, ...args);
@@ -21,10 +25,28 @@ db.test().then((err) => {
     engine.on('valid', (count) => {
       server.emit(iface.Events.valid, count);
     });
+    engine.on('pause', (paused:boolean) => {
+      server.emit(iface.Events.pause, paused);
+    });
+
+    server.on('pause', () => {
+      if (!engine.isPaused()) {
+          engine.isPaused(true);
+      } else {
+        engine.start(db, targets).then((tgts) => {
+          targets = tgts;
+        }).catch(err => {
+          console.log(err.message);
+          process.exit(1);
+        });
+      }
+    });
   }
 
-  engine.crawl([], db, -1).then(() => {
+  engine.start(db).then((tgts) => {
+    targets = tgts;
   }).catch(err => {
-    console.log(err);
+    console.log(err.message);
+    process.exit(1);
   });
 });
