@@ -13,3 +13,15 @@
   display: flex;
   justify-content: center;
 }
+
+.resultTitle {
+  text-decoration: solid;
+  color: black;
+  font-weight: bold;
+  font-size: x-large;
+}
+
+.resultKeywords {
+  margin-top: 0.5ex;
+  font-size: smaller;
+}

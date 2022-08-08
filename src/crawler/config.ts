@@ -34,6 +34,7 @@ let TIMEOUT = ms ?? 3000;
 let TARGETS_CAP = config.targets_cap ?? 5000;
 let USE_WEB_IFACE = config.use_web_interface ?? true;
 let IFACE_PORT = config.web_interface_port ?? 8081;
+let UNSAFE = config.unsafe ?? false;
 
 export function timeout(ms?:number) {
   if (ms !== undefined) {
@@ -61,4 +62,11 @@ export function useWebIface(flag?:boolean) {
     USE_WEB_IFACE = flag;
   }
   return USE_WEB_IFACE;
+}
+
+export function unsafe(flag?:boolean) {
+  if (flag !== undefined) {
+    UNSAFE = flag;
+  }
+  return UNSAFE;
 }

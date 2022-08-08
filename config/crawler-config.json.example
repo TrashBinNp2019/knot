@@ -2,5 +2,6 @@
     "request_timeout": "5s",
     "targets_cap": 1000,
     "use_web_interface": true,
-    "web_interface_port": 8081
+    "web_interface_port": 8081,
+    "unsafe": false
 }

@@ -34,7 +34,7 @@ class Results extends React.Component {
 
     render() {
         const results = this.props.entries.map(el => {
-            return <Result title={el.title} addr={el.addr} content={el.content}/>
+            return <Result title={el.title} addr={el.addr} content={el.content} keywords={el.keywords}/>
         });
 
         return (
@@ -52,18 +52,23 @@ class Result extends React.Component {
     }
 
     render() {
-        let { title, addr, content } = this.props;
+        let { title, addr, content, keywords } = this.props;
         if (content.length === 0) {
             content = '-';
         } else if (content.length > 50) {
             content = content.substring(0, 50) + '...';
         }
+        if (keywords.length === 0) {
+            keywords = '-';
+        } else if (keywords.length > 20) {
+            keywords = keywords.substring(0, 50) + '...';
+        }
 
         return (
             <div className='resultBox'>
-                <h3>{title}</h3>
-                <a href={addr}>{addr}</a>
-                <p>{content}</p>
+                <a className="resultTitle" href={addr}>{title}</a>
+                <p className="resultContent">{content}</p>
+                <p className="resultKeywords"><i>{keywords}</i></p>
             </div>
         );
     }
@@ -86,7 +91,8 @@ class App extends React.Component {
                     ({
                         title: el.title,
                         addr: el.addr,
-                        content: el.contents
+                        content: el.contents,
+                        keywords: el.keywords,
                     })
                 );
 

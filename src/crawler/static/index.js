@@ -4,6 +4,7 @@ $(document).ready(function() {
   let rate = 0;
   let log_count = 0;
   let prev_cap = 0;
+  let prev_valid_cap = '';
 
   function updateSuccess() {
     rate = valid_total === 0? 0 : valid_total / examined_total;
@@ -37,20 +38,21 @@ $(document).ready(function() {
   socket.on('examined', function(total, pm) {
     examined_total = total;
     $('#examined-total').text(examined_total);
-    $('#epm').text(parseInt(pm, 0));
+    $('#epm').text(parseInt(pm));
     updateSuccess();
   });
 
   socket.on('valid', function(total) {
     valid_total = total;
     $('#valid-total').text(valid_total);
-    let vpm = rate * parseInt($('#epm').text(), 0);
+    let vpm = rate * parseInt($('#epm').text());
     $('#vpm').text(rate > 1 || rate < 0.1? parseInt(rate) : parseFloat(rate).toFixed(1));
     updateSuccess();
   });
 
   socket.on('cap', (val) => {
     prev_cap = val;
+    prev_valid_cap = String(val);
     $('#update-cap').attr('disabled', 'true');
     $('#cap').attr('value', val);
   });
@@ -61,13 +63,17 @@ $(document).ready(function() {
   })
 
 
-  $('#cap').change(function() {
-    $('#update-cap').attr('disabled', prev_cap === $('#cap').val());
+  $('#cap').on('input', function() {
+    if (/\D/.test($('#cap').val()) || $('#cap').val() === '') {
+      $('#cap').val(prev_valid_cap);
+    }
+    $('#update-cap').attr('disabled', prev_cap === parseInt($('#cap').val()));
+    prev_valid_cap = $('#cap').val();
   });
 
   $('#update-cap').click(function() {
     let val = $('#cap').val();
-    val = parseInt(val, prev_cap);
+    val = parseInt(val);
     socket.emit('cap', val);
     $('#update-cap').attr('disabled', 'true');
   });

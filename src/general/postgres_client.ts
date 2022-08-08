@@ -18,32 +18,44 @@ const pool = new Pool({
 
 export async function test() {
   try {
-    await pool.query('SELECT title, addr, contents FROM hosts');
+    await pool.query('SELECT title, addr, contents, keywords FROM hosts');
     return undefined;
   } catch (err) {
     if (err.code === '42P01') {
       try {
         await pool.query(`CREATE TABLE hosts (
-          title VARCHAR(120) NOT NULL,
-          addr VARCHAR(120) NOT NULL,
-          contents VARCHAR(5000) NOT NULL
-          )`);
-          return undefined;
-        } catch(e) {
-          return e;
-        }
-      } else {
-        return err;
+          title VARCHAR(128) NOT NULL,
+          addr VARCHAR(128) NOT NULL,
+          contents TEXT NOT NULL,
+          keywords VARCHAR(256) NOT NULL,
+          timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )`);
+        return undefined;
+      } catch(e) {
+        return e;
       }
+    } else {
+      return err;
     }
   }
+}
   
   export function push(host:Host) {
-    host.title = host.title.replace(/'/g, '');
-    host.addr = host.addr.replace(/'/g, '');
+    host.title = host.title.replace(/'/g, '').substring(0, 128);
+    host.addr = host.addr.replace(/'/g, '').substring(0, 128);
     host.contents = host.contents.replace(/'/g, '');
+    if (host.contents.length > 65534) {
+      host.contents = host.contents.substring(0, 65534);
+    }
+    host.keywords = host.keywords.replace(/'/g, '').substring(0, 255);
+
     pool.query(
-      `INSERT INTO hosts (title, addr, contents) VALUES ('${host.title}', '${host.addr}', '${host.contents}')`, 
+      `INSERT INTO hosts (title, addr, contents, keywords) VALUES (
+        '${host.title}', 
+        '${host.addr}', 
+        '${host.contents}', 
+        '${host.keywords}'
+      )`, 
       (err, res) => 
       {
         if (err) throw err;
@@ -51,10 +63,10 @@ export async function test() {
     }
     
     export async function get() {
-      return (await pool.query('SELECT title, addr, contents FROM hosts')).rows;
+      return (await pool.query('SELECT title, addr FROM hosts')).rows;
     }
     
     export async function search(query:string) {
       query = query.replace(/'/g, '');
-      return (await pool.query(`SELECT title, addr, contents FROM hosts WHERE title LIKE '%${query}%' OR contents LIKE '%${query}%'`)).rows;
+      return (await pool.query(`SELECT title, addr, contents, keywords FROM hosts WHERE title iLIKE '%${query}%' OR contents LIKE '%${query}%'`)).rows;
     }

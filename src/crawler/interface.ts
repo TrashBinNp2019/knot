@@ -41,7 +41,7 @@ export function init(state:() => { paused:boolean }) {
     socket.emit(Events.pause, state().paused);
 
     socket.on('cap', (count) => {
-      io.emit(Events.cap, config.targetsCap(count));
+      io.emit(Events.cap, config.targetsCap(count > 50000 ? 50000 : count));
     });
 
     socket.on('pause', () => {

@@ -33,7 +33,7 @@ db.test().then((err) => {
       if (!engine.isPaused()) {
           engine.isPaused(true);
       } else {
-        engine.start(db, targets).then((tgts) => {
+        engine.start({ db: db, targets: targets }).then((tgts) => {
           targets = tgts;
         }).catch(err => {
           console.log(err.message);
@@ -43,7 +43,7 @@ db.test().then((err) => {
     });
   }
 
-  engine.start(db).then((tgts) => {
+  engine.start({ db: db }).then((tgts) => {
     targets = tgts;
   }).catch(err => {
     console.log(err.message);
