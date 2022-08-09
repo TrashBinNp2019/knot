@@ -20,5 +20,5 @@ if (!fs.existsSync('build/general/public')) {
   fs.mkdirSync('build/general/public');
 }
 
-ncp('src/crawler/static', 'build/crawler/static', { filter: (str) => { return !/\.js/.test(str) } }, () => {});
-ncp('src/page/static', 'build/page/static', { filter: (str) => { return !/\.js$/.test(str) } }, () => {});
+ncp('src/crawler/static', 'build/crawler/static', { filter: (str) => { return !/\.js$/.test(str) } }, () => {});
+ncp('src/page/static', 'build/page/static', { filter: (str) => { return !/\.js/.test(str) } }, () => {});
