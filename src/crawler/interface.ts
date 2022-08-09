@@ -20,6 +20,7 @@ export function init(state:() => { paused:boolean }) {
   const app = express();
 
   app.use(express.static((process.env.NODE_ENV === 'dev'? 'src' : 'build') + '/crawler/static'));
+  app.use('/scripts', express.static(process.env.NODE_ENV === 'dev'? 'src/general' : 'build/general/public'));
 
   const httpServer = createServer(app);
   const io = new Server(httpServer);
@@ -41,6 +42,7 @@ export function init(state:() => { paused:boolean }) {
     socket.emit(Events.pause, state().paused);
 
     socket.on('cap', (count) => {
+      count = parseInt(count) || config.targetsCap();
       io.emit(Events.cap, config.targetsCap(count > 50000 ? 50000 : count));
     });
 
@@ -102,6 +104,7 @@ export function init(state:() => { paused:boolean }) {
   return { emit, on };
 }
 
+// TODO improve this to 1) ignore small differences and 2) use a rolling average
 function calculatePerMinute(prev:Date, prevRate:number, count:number) {
   const now = new Date();
   let diff = now.getTime() - prev.getTime();

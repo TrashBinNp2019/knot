@@ -15,6 +15,8 @@ $(document).ready(function() {
     }
   }
 
+  // TODO more stats!
+
   $('.logs').append("<li>Loading...</li>");
 
   const socket = io();
@@ -24,6 +26,9 @@ $(document).ready(function() {
     let obj = {};
     if (data.startsWith('{')) {
       obj = JSON.parse(data);
+      obj.title = forHtml(obj.title);
+      obj.addr = forHtml(obj.addr);
+      obj.contents_length = parseInt(obj.contents_length) || 0;
     }
     if ('title' in obj && 'addr' in obj && 'contents_length' in obj) {
       $('.logs').append(`<li><a href=${obj.addr}>${obj.title}</a>. Contents length: ${obj.contents_length}</li>`);
@@ -36,22 +41,22 @@ $(document).ready(function() {
   });
 
   socket.on('examined', function(total, pm) {
-    examined_total = total;
+    examined_total = parseInt(total) || 0;
     $('#examined-total').text(examined_total);
-    $('#epm').text(parseInt(pm));
+    $('#epm').text(parseInt(pm) || 0);
     updateSuccess();
   });
 
   socket.on('valid', function(total) {
-    valid_total = total;
+    valid_total = parseInt(total) || 0;
     $('#valid-total').text(valid_total);
-    let vpm = rate * parseInt($('#epm').text());
+    let vpm = rate * (parseInt($('#epm').text()) || 0);
     $('#vpm').text(rate > 1 || rate < 0.1? parseInt(rate) : parseFloat(rate).toFixed(1));
     updateSuccess();
   });
 
   socket.on('cap', (val) => {
-    prev_cap = val;
+    prev_cap = parseInt(val) || prev_cap;
     prev_valid_cap = String(val);
     $('#update-cap').attr('disabled', 'true');
     $('#cap').attr('value', val);

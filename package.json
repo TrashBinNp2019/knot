@@ -10,7 +10,7 @@
     "page": "node build/page/server.js",
     "crawler-dev": "set NODE_ENV=dev&& ts-node-esm src/crawler/main.ts",
     "page-dev": "set NODE_ENV=dev&& ts-node-esm src/page/server.ts",
-    "build": "node src/build-tools/pre.js && tsc && babel --presets @babel/preset-react src/page/static -d build/page/static && babel src/crawler/static -d build/crawler/static && node src/build-tools/post.js"
+    "build": "node src/build-tools/pre.js && tsc && babel --presets @babel/preset-react src/page/static -d build/page/static && babel src/crawler/static -d build/crawler/static && babel src/general -d build/general && babel src/general -d build/general/public && node src/build-tools/post.js"
   },
   "author": "",
   "license": "ISC",

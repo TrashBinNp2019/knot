@@ -1,4 +1,5 @@
 class Search extends React.Component {
+    // TODO search on enter, size limitation, more fun stuff
     constructor(props) {
         super(props);
         this.state = {
@@ -8,7 +9,7 @@ class Search extends React.Component {
 
     handleChange = (e) => {
         this.setState({
-            val: e.target.value.replace(/['"`]+/, '')
+            val: forSql(e.target.value)
         });
     }
 
@@ -36,10 +37,12 @@ class Results extends React.Component {
         const results = this.props.entries.map(el => {
             return <Result title={el.title} addr={el.addr} content={el.content} keywords={el.keywords}/>
         });
+        let { search, entries } = this.props;
+        search = forHtml(search);
 
         return (
             <div>
-                <p>Results for {this.props.search}:<br /> <i>{this.props.entries.length} entr{this.props.entries.length === 1? 'y' : 'ies'} found</i></p>
+                <p>Results for {search}:<br /> <i>{entries.length} entr{entries.length === 1? 'y' : 'ies'} found</i></p>
                 {results}
             </div>
         );
@@ -53,6 +56,11 @@ class Result extends React.Component {
 
     render() {
         let { title, addr, content, keywords } = this.props;
+        title = forHtml(title);
+        addr = forHtml(addr);
+        content = forHtml(content);
+        keywords = forHtml(keywords);
+        
         if (content.length === 0) {
             content = '-';
         } else if (content.length > 50) {

@@ -7,6 +7,9 @@ if (fs.existsSync('build/page/static/index.html')) {
     $('#react').removeAttr('type');
     $('#react').attr('src', 'index.js');
     $('#react').removeAttr('id');
+    $('#prep-string').removeAttr('type');
+    $('#prep-string').removeAttr('id');
+    $('#exports').remove();
     fsc.writeFile('build/page/static/index.html', $);
   });
 }
@@ -16,6 +19,15 @@ if (fs.existsSync('build/crawler/static/index.html')) {
     $('#babel').remove();
     $('#main').removeAttr('type');
     $('#main').removeAttr('id');
+    $('#prep-string').removeAttr('type');
+    $('#prep-string').removeAttr('id');
+    $('#exports').remove();
     fsc.writeFile('build/crawler/static/index.html', $);
   });
+}
+
+if (fs.existsSync('build/general/public/prep-string.js')) {
+  let file = fs.readFileSync('build/general/public/prep-string.js');
+  file = file.toString().replace(/^export /gm, '');
+  fs.writeFileSync('build/general/public/prep-string.js', file);
 }

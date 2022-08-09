@@ -18,15 +18,17 @@ if (process.env.NODE_ENV !== 'dev') {
           "'unsafe-inline'",
           "https://unpkg.com/react@18/", 
           "https://unpkg.com/react-dom@18/",
-          "https://unpkg.com/@babel/",
         ],
       },
     }
   }));
   app.use(express.static('build/page/static'));
+  app.use('/scripts', express.static('build/general/public'));
 } else {
   console.log('- Running in dev mode');
   app.use(express.static('src/page/static'));
+  // next line exposes all the utils, including database structure.
+  app.use('/scripts', express.static('src/general'));
 }
 app.use(bodyParser.urlencoded({ extended: true }));
 

@@ -292,13 +292,13 @@ export function inspect(res: AxiosResponse<any, any>, source: string, targets: s
           } else {
             val = source + '/' + val;
           }
-        } else if (val.startsWith('#')) {
+        } else if (val.startsWith('#') || val.length === 0) {
           return;
         } else {
           val = source + val;
         }
       }
-      console.log(val);
+      // console.log(val);
       if (targets.indexOf(val) === -1) {
         targets.push(val);
       }

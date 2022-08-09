@@ -1,6 +1,7 @@
 import pg from 'pg';
 import * as fs from 'fs';
 import { Host } from './abstract_client.js';
+import * as prep from './prep-string.js'
 const { Pool } = pg;
 
 const config = JSON.parse(fs.readFileSync('./config/postgres-config.json', 'utf8'));
@@ -41,13 +42,13 @@ export async function test() {
 }
   
   export function push(host:Host) {
-    host.title = host.title.replace(/'/g, '').substring(0, 128);
-    host.addr = host.addr.replace(/'/g, '').substring(0, 128);
-    host.contents = host.contents.replace(/'/g, '');
+    host.title = prep.forSql(host.title).substring(0, 128);
+    host.addr = prep.forSql(host.addr).substring(0, 128);
+    host.contents = prep.forSql(host.contents);
     if (host.contents.length > 65534) {
       host.contents = host.contents.substring(0, 65534);
     }
-    host.keywords = host.keywords.replace(/'/g, '').substring(0, 255);
+    host.keywords = prep.forSql(host.keywords).substring(0, 256);
 
     pool.query(
       `INSERT INTO hosts (title, addr, contents, keywords) VALUES (
@@ -67,6 +68,6 @@ export async function test() {
     }
     
     export async function search(query:string) {
-      query = query.replace(/'/g, '');
+      query = prep.forSql(query);
       return (await pool.query(`SELECT title, addr, contents, keywords FROM hosts WHERE title iLIKE '%${query}%' OR contents LIKE '%${query}%'`)).rows;
     }
