@@ -15,7 +15,9 @@ for (const key in Events) {
 }
 
 function log(...args:any[]) {
-  console.log('-', ...args);
+  if (config.logToConsole()) { 
+    console.log('-', ...args);
+  }
   callbacks.get(Events.log).forEach(callback => callback(...args));
 }
 
@@ -39,9 +41,9 @@ export function isPaused(flag?:boolean) {
 }
 
 /**
- * Adds provided argument to callback list for the event.
- * @param event Event to add callback to. Must be a key in Events.
- * @param callback Callback to add
+ * Connects listener to the event.
+ * @param event Event to add listener to. Must be a key in Events.
+ * @param callback Listener to add
  */
 export function on(event:string, callback: (...args:any) => void) {
   if (!callbacks.has(event)) {
@@ -49,6 +51,7 @@ export function on(event:string, callback: (...args:any) => void) {
   }
 
   callbacks.get(event).push(callback);
+  return this;
 }
 
 /**
@@ -70,6 +73,38 @@ function generateIp():string {
   return `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
 }
 
+/**
+ * Resolves hyperlink relative to the base url.
+ * @example resolve('/foo/bar', 'http://example.com') => 'http://example.com/foo/bar'
+ * @param hl Hyperlink to resolve
+ * @param base Base URL to append to
+ * @returns Combination of base and url or undefined if it's equal to base
+ */
+export function toAbsolute(hl:string, base:string):string | undefined {
+  if (hl.includes('#') || hl.length === 0) {
+    return undefined;
+  }
+  if (!hl.startsWith('http')) {
+    if (hl.startsWith('/')) {
+      let ind = base.search(/[^:\/]\//);
+      if (ind !== -1) {
+        return base.substring(0, ind + 1) + hl;
+      } else {
+        return base + hl;
+      }
+    } else if (hl.startsWith('?')) {
+      let skel = base.split('?')[0].split('#')[0];
+      return skel + hl;
+    } else if (!/[^:\/]\//.test(base)) {
+      return base + '/' + hl;
+    } else {
+      return base.slice(0, base.lastIndexOf('/') + 1) + hl;
+    }
+  } else {
+    return hl;
+  }
+}
+
 export class StartOptions {
   db?: Client;
   targets?: string[];
@@ -78,7 +113,7 @@ export class StartOptions {
 
 /**
  * Starts the crawler.
- * @param options DB client, targets array and repetitions count
+ * @param options DB client, targets array and repetitions count - none are necessary
  * @returns Array of targets, discovered or generated, after the last step
  */
 export async function start(options:StartOptions) {
@@ -131,7 +166,8 @@ export async function crawl(targets:string[], db?:Client) {
     targets = targets.map(target => {
       if (!target.startsWith('http')) {
         return `http://${target}`;
-      }   return target;
+      }
+      return target;
     });
     let promises = targets.map(async (target) => {
       try {
@@ -167,15 +203,29 @@ export async function crawl(targets:string[], db?:Client) {
 }
 
 /**
-* Inspect the response and extract title, contents and futher possible targets
-* @param res AxiosResponse to inspect
+ * Inspect the response and extract title, contents and futher possible targets
+ * @example 
+ * inspect({ 
+    data: Buffer.from('<html><body><p>Hello</p></body></html>',
+    headers: { 
+      'content-type': 'text/html' 
+    },
+      }, 
+    'http://example.com/2',
+    ['http://example.com/1', 'http://example.com/2'],
+    {
+      test: async () => undefined,
+      push: (host) => {console.log(host)},
+    }
+  );
+* @param res Response object to inspect. Should contain data as a Buffer and headers in form of an object.
 * @param source Response source
-* @param targets Array to append any discovered targets to
+* @param targets Array to append any discovered links to
 */
-export function inspect(res: AxiosResponse<any, any>, source: string, targets: string[], db?:Client ) {
+export function inspect(res: { data:Buffer, headers:{ [key: string]: string } }, source: string, targets?: string[], db?:Client ) {
   const $ = cheerio.load(res.data);
   let forHrefs: (callback:(i:number, elem:{ val?:string }) => void) => void;
-
+  
   if (res.headers['content-type'] !== undefined && !res.headers['content-type'].includes('text/html')) {
     log('Unknown content type', res.headers['content-type']);
     return;
@@ -195,7 +245,7 @@ export function inspect(res: AxiosResponse<any, any>, source: string, targets: s
   // Search for title and format it
   let index = 1;
   while (!title && index <= 6) {
-    title = $(`h${index}`).text();
+    title = $(`h${index}`).first().text();
     index++;
   }
   if (!title) {
@@ -217,10 +267,17 @@ export function inspect(res: AxiosResponse<any, any>, source: string, targets: s
   
   // Search for contents and format them
   for (let i = 1; i <= 6; i++) {
-    contents += ($(`h${i}`).text() ?? '') + ' ';
+    $('h' + i).each((ind, elem) => {
+      contents += $(elem).text() + ' ';
+    });
   }
-  contents += $('p').text() ?? '';
-
+  $('p').each((ind, elem) => {
+    contents += $(elem).text() + ' ';
+  });
+  $('li').each((ind, elem) => {
+    contents += $(elem).text() + ' ';
+  });
+  
   // If nothing was found on the page, try running scripts
   if (contents.replace(' ', '').length  === 0 && config.unsafe()) {
     const { window } = new JSDOM(res.data, {
@@ -230,16 +287,16 @@ export function inspect(res: AxiosResponse<any, any>, source: string, targets: s
     });
     contents = window.document.body.textContent;
     log(`Running scripts generated ${contents.length} symbols`);
-
+    
     const links:string[] = [];
     window.document.body.querySelectorAll('[href]').forEach(val => {
       if (val.getAttribute('href')) {
         links.push(val.getAttribute('href'));
       }
     });    
-
+    
     window.close();
-
+    
     forHrefs = (callback) => {
       links.forEach((val, i) => {
         callback(i, { val: val });
@@ -252,7 +309,7 @@ export function inspect(res: AxiosResponse<any, any>, source: string, targets: s
       })
     }
   }
-
+  
   let pre = 0;
   let extras = $('meta[name="description"]').attr('content') ?? '';
   extras += $('meta[name="keywords"]').attr('content') ?? '';
@@ -269,54 +326,40 @@ export function inspect(res: AxiosResponse<any, any>, source: string, targets: s
   if (post > pre) {
     // log(`${post - pre} symbols gathered from Open Graph meta tags`);
   }
-
+  
   contents += extras;
-  contents = contents.replace(/[\n'"`]+/gi, ' ');
+  contents = contents.replace(/[\n]+/g, ' ');
   contents = contents.replace(/\s+/g, ' ');
   if (contents.length > 65534) {
     contents = contents.substring(0, 65534);
   }
   contents = contents.substring(0, contents.lastIndexOf(' '));
-
+  
+  // TODO parse forms?
   // Search for links
   forHrefs((i, elem) => {
     const href = elem.val;
     ifDefined(href, val => {
-      val = val.substring(0, val.indexOf('?') ?? val.length);
-      val = val.substring(0, val.indexOf('#') ?? val.length);
-      if (!val.startsWith('http')) {
-        if (val.startsWith('/')) {
-          let ind = source.search(/[^:\/]\//) + 1;
-          if (ind !== -1) {
-            val = source.substring(0, ind) + val;
-          } else {
-            val = source + '/' + val;
-          }
-        } else if (val.startsWith('#') || val.length === 0) {
-          return;
-        } else {
-          val = source + val;
-        }
-      }
-      // console.log(val);
-      if (targets.indexOf(val) === -1) {
+      val = toAbsolute(val, source);
+      if (targets !== undefined && targets.indexOf(val) === -1) {
         targets.push(val);
       }
     });
   });
-
+  
   // Search for keywords
   keywords += res.headers['x-powered-by'] ?? '';
   keywords += res.headers['server'] ?? '';
   if (keywords.length > 0) {
     // log(`${keywords.length} symbols gathered from headers`);
   }
-
-  keywords = keywords.replace(/[\n'"`]+/gi, ' ');
+  
+  keywords = keywords.replace(/[\n]+/g, ' ');
   keywords = keywords.replace(/\s+/g, ' ');
+  keywords += ' ';
   keywords = keywords.substring(0, 255);
   keywords = keywords.substring(0, keywords.lastIndexOf(' '));
-
+  
   log({ title: title, addr: source, contents_length: contents.length, keywords_length: keywords.length });
   if (db !== undefined) {
     db.push({ title: title, addr: source, contents: contents, keywords: keywords});
