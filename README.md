@@ -8,6 +8,7 @@ In order to build the app, run:
 ```
 npm i
 npm run build
+npm run test-build
 ```
 After that, visit _config_ directory for configurations.  
 > This package uses Postgres for storage. Unless _postgres-config.json_ is valid, **neither service will start**. See _postgres-config.json.example_ for reference.

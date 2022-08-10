@@ -4,5 +4,6 @@
         "moduleResolution": "node",
         "outDir": "build/",
         "allowSyntheticDefaultImports": true,
-    }
+    },
+    "include": ["src/**/*.ts"],
 }
