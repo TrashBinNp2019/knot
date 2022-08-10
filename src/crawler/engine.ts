@@ -6,6 +6,8 @@ import * as config from './config.js';
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
+const CONTENT_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li'];
+
 let paused = false;
 let pauseRequested = false;
 
@@ -223,8 +225,7 @@ export async function crawl(targets:string[], db?:Client) {
 * @param targets Array to append any discovered links to
 */
 export function inspect(res: { data:Buffer, headers:{ [key: string]: string } }, source: string, targets?: string[], db?:Client ) {
-  const $ = cheerio.load(res.data);
-  let forHrefs: (callback:(i:number, elem:{ val?:string }) => void) => void;
+  let $ = cheerio.load(res.data);
   
   if (res.headers['content-type'] !== undefined && !res.headers['content-type'].includes('text/html')) {
     log('Unknown content type', res.headers['content-type']);
@@ -232,7 +233,7 @@ export function inspect(res: { data:Buffer, headers:{ [key: string]: string } },
   }
   
   // Initiate fields
-  let title = $('title').text();
+  let title = '';
   let contents = '';
   let keywords = '';
   
@@ -241,51 +242,32 @@ export function inspect(res: { data:Buffer, headers:{ [key: string]: string } },
     log('A source is too long!');
     return;
   }
-  
-  // Search for title and format it
-  let index = 1;
-  while (!title && index <= 6) {
-    title = $(`h${index}`).first().text();
-    index++;
-  }
-  if (!title) {
-    title = $('meta[name="title"]').attr('content');
-  }
-  if (!title) {
-    title = source;
-  }
-  if (!title) {
-    title = 'unknown';
-  }
-  if (title.split(' ').length > 5) {
-    title = title.split(' ').slice(0, 5).join(' ') + '...';
-  } else if (title.length > 100) {
-    title = title.substring(0, 100) + '...';
-  }
-  title = title.replace(/[\n'"`]+/gi, ' ');
-  title = title.replace(/\s+/g, ' ');
-  
+
   // Search for contents and format them
-  for (let i = 1; i <= 6; i++) {
-    $('h' + i).each((ind, elem) => {
-      contents += $(elem).text() + ' ';
+  CONTENT_TAGS.forEach((tag) => {
+    $(tag).each((ind, elem) => {
+      if ($(elem).text() !== undefined && $(elem).text().length > 0) {
+        contents += $(elem).text() + ' ';
+      }
     });
-  }
-  $('p').each((ind, elem) => {
-    contents += $(elem).text() + ' ';
-  });
-  $('li').each((ind, elem) => {
-    contents += $(elem).text() + ' ';
   });
   
   // If nothing was found on the page, try running scripts
-  if (contents.replace(' ', '').length  === 0 && config.unsafe()) {
+  if (!/[^\s]/.test(contents) && config.unsafe()) {
     const { window } = new JSDOM(res.data, {
       runScripts: "dangerously",
       resources: "usable",
       pretendToBeVisual: true,
     });
-    contents = window.document.body.textContent;
+    contents = '';
+    CONTENT_TAGS.forEach((tag) => {
+      window.document.body.querySelectorAll(tag).forEach((elem) => {
+        if (elem.textContent !== undefined && elem.textContent.length > 0) {
+          contents += elem.textContent + ' ';
+        }
+      });
+    });
+
     log(`Running scripts generated ${contents.length} symbols`);
     
     const links:string[] = [];
@@ -295,19 +277,8 @@ export function inspect(res: { data:Buffer, headers:{ [key: string]: string } },
       }
     });    
     
+    $ = cheerio.load(`<head>${window.document.head.innerHTML}</head><body>${window.document.body.innerHTML}</body>`);
     window.close();
-    
-    forHrefs = (callback) => {
-      links.forEach((val, i) => {
-        callback(i, { val: val });
-      });
-    }
-  } else {
-    forHrefs = (callback) => {
-      $('[href]').each((i, elem) => {
-        callback(i, { val: $(elem).attr('href') });
-      })
-    }
   }
   
   let pre = 0;
@@ -335,11 +306,34 @@ export function inspect(res: { data:Buffer, headers:{ [key: string]: string } },
   }
   contents = contents.substring(0, contents.lastIndexOf(' '));
   
+  // Search for title and format it
+  title = $('title').text();
+  let index = 1;
+  while (!title && index <= 6) {
+    title = $('h' + index).first().text();
+    index++;
+  }
+  if (!title) {
+    title = $('meta[name="title"]').attr('content');
+  }
+  if (!title) {
+    title = source;
+  }
+  if (!title) {
+    title = 'unknown';
+  }
+  if (title.split(' ').length > 5) {
+    title = title.split(' ').slice(0, 5).join(' ') + '...';
+  } else if (title.length > 100) {
+    title = title.substring(0, 100) + '...';
+  }
+  title = title.replace(/[\n'"`]+/gi, ' ');
+  title = title.replace(/\s+/g, ' ');
+  
   // TODO parse forms?
   // Search for links
-  forHrefs((i, elem) => {
-    const href = elem.val;
-    ifDefined(href, val => {
+  $('[href]').each((i, elem) => {
+    ifDefined(elem.attribs.href, val => {
       val = toAbsolute(val, source);
       if (targets !== undefined && targets.indexOf(val) === -1) {
         targets.push(val);

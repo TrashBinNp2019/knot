@@ -3,5 +3,6 @@
     "targets_cap": 1000,
     "use_web_interface": true,
     "web_interface_port": 8081,
+    "log_to_console": true,
     "unsafe": false
 }
