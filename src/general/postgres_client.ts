@@ -5,12 +5,16 @@ import * as prep from './prep-string.js'
 const { Pool } = pg;
 
 const config = JSON.parse(fs.readFileSync('./config/postgres-config.json', 'utf8'));
+if (config.user === undefined) {
+  console.log('- Postgres user name not found in postgres-config.json');
+  process.exit(1);
+}
 if (config.password === undefined) {
   console.log('- Postgres password not found in postgres-config.json');
   process.exit(1);
 }
 const pool = new Pool({
-  user: config.user ?? 'knot',
+  user: config.user,
   host: config.host ?? 'localhost',
   database: config.database ?? 'knot',
   password: config.password,
@@ -67,7 +71,9 @@ export async function test() {
       return (await pool.query('SELECT title, addr FROM hosts')).rows;
     }
     
-    export async function search(query:string) {
-      query = prep.forSql(query);
-      return (await pool.query(`SELECT title, addr, contents, keywords FROM hosts WHERE title iLIKE '%${query}%' OR contents LIKE '%${query}%'`)).rows;
+    export async function search(q:string) {
+      let query = `SELECT title, addr, contents, keywords FROM hosts WHERE title iLIKE $1 OR contents LIKE $1`;
+      return (
+        await pool.query(query, ['% ' + prep.forSql(q) + ' %'])
+      ).rows;
     }
