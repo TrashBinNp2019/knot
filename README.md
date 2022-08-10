@@ -1,5 +1,6 @@
 # Knot
 
+![example](https://github.com/TrashBinNp2019/knot/actions/workflows/main.yml/badge.svg?branch=master)  
 Internet crawler, searching for deep web stuff 🕸️.
 
 # Setup
