@@ -1,6 +1,7 @@
 # Knot
 
-![example](https://github.com/TrashBinNp2019/knot/actions/workflows/main.yml/badge.svg?branch=master)  
+[![Node.js CI](https://github.com/TrashBinNp2019/knot/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/TrashBinNp2019/knot/actions/workflows/main.yml) 
+[![CodeQL](https://github.com/TrashBinNp2019/knot/actions/workflows/codeql.yml/badge.svg)](https://github.com/TrashBinNp2019/knot/actions/workflows/codeql.yml)  
 Internet crawler, searching for deep web stuff 🕸️.
 
 # Setup
