@@ -1,7 +1,10 @@
 # Knot
 
 [![Node.js CI](https://github.com/TrashBinNp2019/knot/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/TrashBinNp2019/knot/actions/workflows/main.yml) 
-[![CodeQL](https://github.com/TrashBinNp2019/knot/actions/workflows/codeql.yml/badge.svg)](https://github.com/TrashBinNp2019/knot/actions/workflows/codeql.yml)  
+[![CodeQL](https://github.com/TrashBinNp2019/knot/actions/workflows/codeql.yml/badge.svg)](https://github.com/TrashBinNp2019/knot/actions/workflows/codeql.yml)
+[![Maintainability](https://api.codeclimate.com/v1/badges/08439d9f9a68256640f1/maintainability)](https://codeclimate.com/github/TrashBinNp2019/knot/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/08439d9f9a68256640f1/test_coverage)](https://codeclimate.com/github/TrashBinNp2019/knot/test_coverage)  
+  
 Internet crawler, searching for deep web stuff 🕸️.
 
 # Setup
