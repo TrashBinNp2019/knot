@@ -3,10 +3,10 @@ import { Client } from '../general/abstract_client.js';
 import { Events } from './interface.js';
 import { crawlerConfig as config } from '../general/config/config_singleton.js';
 import { inspect } from './inspect.js'
-import { generateIps } from '../general/utils.js';
+import { store } from './state/store.js';
+import * as pausable from './state/pausableSlice.js';
+import * as targets from './state/targetsSlice.js';
 
-let paused = false;
-let pauseRequested = false;
 let listeners:Map<string, ((...args:any) => void)[]> = new Map();
 
 export function clearListeners() {
@@ -32,19 +32,12 @@ function valid() {
 }
 
 function pause() {
-  listeners.get(Events.pause).forEach(callback => callback(paused));
-}
-
-export function isPaused(flag?:boolean) {
-  if (flag !== undefined) {
-    pauseRequested = flag;
-  }
-  return paused;
+  listeners.get(Events.pause).forEach(callback => callback());
 }
 
 /**
  * Connects listener to the event.
- * @param event Event to add listener to. Must be a key in Events.
+ * @param event Event to add listener to. Must be a key in Events
  * @param callback Listener to add
  */
 export function on(event:string, callback: (...args:any) => void) {
@@ -58,8 +51,8 @@ export function on(event:string, callback: (...args:any) => void) {
 
 export class StartOptions {
   db?: Client;
-  targets?: string[];
   repetitions?: number;
+  targets?: string[];
   generate_random_targets?: boolean;
   run_for?: string | number;
 }
@@ -71,81 +64,63 @@ export class StartOptions {
  */
 export async function start(options:StartOptions) {
   let db = options.db;
-  let targets = options.targets ?? [];
   let repetitions = options.repetitions ?? -1;
-  let generate_random_targets = options.generate_random_targets ?? true;
   // TODO implement
   let run_for = options.run_for ?? -1;
 
-  if (paused) {
+  if (store.getState().pausable.paused) {
     log('Resuming');
-    paused = false;
+    store.dispatch(pausable.resumed({}));
     pause();
+  } else {
+    log('Starting');
+    options.targets?.forEach(target => {
+      store.dispatch(targets.push({ target }))
+    });
   }
 
-  while (repetitions !== 0 && !pauseRequested) {
-    if (targets.length === 0) {
-      if (generate_random_targets) {
-        targets = generateIps(config.targets_cap);
-      } else {
-        log('No targets detected');
-        break;
-      }
-    }
-    let new_targets = await crawl(targets, db);
+  while (repetitions !== 0 && !store.getState().pausable.pausePending) {
+    store.dispatch(targets.shift({}));
 
-    if (new_targets.length !== 0) {
-      log(`Detected ${new_targets.length} new targets`);
+    if (store.getState().targets.curr.length === 0) {
+      log('No targets detected');
+      break;
     }
-    if (new_targets.length < config.targets_cap) {
-      if (generate_random_targets) {
-        new_targets = [...new_targets, ...generateIps(config.targets_cap - new_targets.length)];
-      }
-    } else {
-      log('Too many targets detected, dropping');
-      new_targets = generateIps(config.targets_cap);
-    }
-    examined(targets.length);
-
-    targets = new_targets;
+    
+    await crawl(db);
+    examined(store.getState().targets.curr.length);
     repetitions--;
   }
 
-  if (pauseRequested) {
+  if (store.getState().pausable.pausePending) {
     log('Paused');
-    paused = true;
-    pauseRequested = false;
+    store.dispatch(pausable.paused({}));
     pause();
+  } else {
+    log('Finished');
+    store.dispatch(targets.clear({}));
   }
-  return targets;
 }
 
 /**
 * Scan targets for any web pages and new targets, passing results to a db client
-* @param targets Array of targets to crawl
 * @param db Database client
-* @return 
 */
-export async function crawl(targets:string[], db?:Client) {
-  let new_targets:string[] = [];
-  makeValid(targets);
-
-  await Promise.allSettled(targets.map(async target => ({ 
+export async function crawl(db?:Client) {
+  await Promise.allSettled(validate(store.getState().targets.curr).map(async target => ({ 
     res: await axios.get(target, { timeout: config.request_timeout } ), 
     target,
   }))).then(async results => {
-    handleResults(results, new_targets, db);
+    handleResults(results, db);
   }).catch(e => {
     log(e.message);
   });
-
-  return new_targets;
 }
 
-function handleResults(results: PromiseSettledResult<{ res: AxiosResponse<any, any>; target: string; }>[], new_targets: string[], db: Client) {
+function handleResults(results: PromiseSettledResult<{ res: AxiosResponse<any, any>; target: string; }>[], db: Client) {
   results.forEach(result => {
     if (result.status === 'fulfilled') {
-      handleConnection(result, new_targets, db);
+      handleConnection(result, db);
     } else {
       handleError(result);
     }
@@ -153,19 +128,23 @@ function handleResults(results: PromiseSettledResult<{ res: AxiosResponse<any, a
 }
 
 function handleError(result: PromiseRejectedResult) {
+  // TODO treat err bad response as valid ? perhaphs
   let e = result.reason;
   if (e.code !== 'ECONNABORTED' &&
     e.code !== 'EADDRNOTAVAIL' &&
     e.code !== 'ENETUNREACH' &&
     e.code !== 'EHOSTUNREACH' &&
     e.code !== 'ECONNREFUSED') {
+      // if (e.code === 'ERR_BAD_RESPONSE') {
+      //   console.log(e);
+      // }
     log('Unusual error:', e.code);
   }
 }
 
-function handleConnection(result: PromiseFulfilledResult<{ res: AxiosResponse<any, any>; target: string; }>, new_targets: string[], db: Client) {
+function handleConnection(result: PromiseFulfilledResult<{ res: AxiosResponse<any, any>; target: string; }>, db: Client) {
   let { target, res } = result.value;
-  inspect(res, target, new_targets, db)
+  inspect(res, target, db)
     .then((host) => {
       log({
         title: host.title,
@@ -177,12 +156,14 @@ function handleConnection(result: PromiseFulfilledResult<{ res: AxiosResponse<an
     });
 }
 
-function makeValid(targets: string[]) {
+function validate(targets: string[]) {
   targets = targets.map(target => {
     if (!target.startsWith('http://') && !target.startsWith('https://')) {
       return `http://${target}`;
     }
     return target;
   });
+
+  return targets;
 }
 

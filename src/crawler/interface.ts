@@ -1,7 +1,10 @@
 import express from "express";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
-import { crawlerConfig as config } from "../general/config/config_singleton";
+import { crawlerConfig as config } from "../general/config/config_singleton.js";
+import { store } from "./state/store.js";
+import * as pausable from "./state/pausableSlice.js";
+import * as general from "./state/generalStatsSlice.js";
 
 export const Events = {
   log: 'log', 
@@ -14,28 +17,19 @@ export const Events = {
 class ServerWrapper {
   private io: Server;  
   private callbacks: Map<string, ((...args: any) => void)[]>;
-  private examined_total: number;
-  private valid_total: number;
-  private examined_prev: Date;
-  private examined_pm: number;
-  private state: () => { paused:boolean };
   
-  constructor(io:Server, state:() => { paused:boolean }) {
+  constructor(io:Server) {
     this.callbacks = new Map<string, ((...args: any) => void)[]>();
-    this.examined_total = 0;
-    this.valid_total = 0;
-    this.examined_prev = new Date();
-    this.examined_pm = 0;
-    this.state = state;
+    this.io = io;
     
     io.on("connection", this.onNewConnection);
   }
 
   private onNewConnection(socket:Socket):void {
-    socket.emit(Events.examined, this.examined_total, this.examined_pm);
-    socket.emit(Events.valid, this.valid_total);
+    socket.emit(Events.examined, store.getState().general.examined_total, store.getState().general.examined_pm);
+    socket.emit(Events.valid, store.getState().general.valid_total);
     socket.emit(Events.cap, config.targets_cap);
-    socket.emit(Events.pause, this.state().paused);
+    socket.emit(Events.pause, store.getState().pausable.paused);
     
     socket.on('cap', (count) => {
       count = parseInt(count) || config.targets_cap;
@@ -44,7 +38,7 @@ class ServerWrapper {
     });
     
     socket.on('pause', () => {
-      this.examined_prev = new Date();      
+      store.dispatch(pausable.pauseRequested({}));
     });
     
     for (const key in Events) {
@@ -60,17 +54,12 @@ class ServerWrapper {
     let arg:any = args[0];
     
     switch (event) {
+      case Events.examined:
+        arg = [store.getState().general.examined_total, store.getState().general.examined_pm];
+        break;
       case Events.log: 
         arg = reduce(args);
-        break;
       case Events.valid:
-        this.valid_total += args[0];
-        break;
-      case Events.examined:
-        this.examined_pm = calculatePerMinute(this.examined_prev, this.examined_pm, args[0]);
-        this.examined_total += args[0];
-        this.examined_prev = new Date();
-        arg = [this.examined_total, this.examined_pm];
       case Events.cap:
       case Events.pause:
         break;
@@ -91,8 +80,8 @@ class ServerWrapper {
   }
 }
 
-export function init(state:() => { paused:boolean }) {
-  return new ServerWrapper(new Server(startHttpServer()), state);
+export function init() {
+  return new ServerWrapper(new Server(startHttpServer()));
 }
 
 function startHttpServer() {
@@ -123,19 +112,4 @@ function reduce(args: any[]) {
     message = typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0]);
   }
   return message;
-}
-
-// TODO improve this to 1) ignore small differences and 2) use a rolling average
-function calculatePerMinute(prev:Date, prevRate:number, count:number) {
-  const now = new Date();
-  let diff = now.getTime() - prev.getTime();
-  if (diff < 10) {
-    diff = 10
-  }
-  // console.log(prevRate, diff, count / diff * 1000 * 60, (prevRate * 100 + (count / (diff / 1000 / 60))) / 101);
-  if (prevRate === 0) {
-    return count / diff * 1000 * 60;
-  } else {
-    return (prevRate * 10 + (count / (diff / 1000 / 60))) / 11;
-  }
 }

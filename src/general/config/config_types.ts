@@ -1,11 +1,11 @@
 import * as fs from 'fs';
 import { parseTime } from '../utils.js';
 
-// Interfaces dosn't work smh :/
+// Interfaces don't work smh :/
 class Readable {
   public static read(path:string): Readable {
-    ensureExists('config/crawler-config.json');
-    return ensureValid(fs.readFileSync('config/crawler-config.json', 'utf8'));
+    ensureExists(path);
+    return ensureValid(fs.readFileSync(path, 'utf8'));
   };
 }
 
@@ -27,6 +27,7 @@ export class CrawlerConfig extends Writable implements Readable {
   public web_interface_port: number;
   public unsafe: boolean;
   public log_to_console: boolean;
+  public generate_random_targets: boolean;
   
   constructor(data:any) {
     super();
@@ -42,6 +43,7 @@ export class CrawlerConfig extends Writable implements Readable {
     this.web_interface_port = parseInt(data.web_interface_port) || 8080;
     this.unsafe = data.unsafe ?? false;
     this.log_to_console = data.log_to_console ?? true;
+    this.generate_random_targets = data.generate_random_targets ?? true;
   }
   
   public static read(): CrawlerConfig {
@@ -79,7 +81,7 @@ export class PostgresConfig extends Writable implements Readable {
   
   constructor(data:any) {
     super();
-    if (!allDefined(data, ['user, password, database']) || !allStrings(data, ['user, password, database'])) {
+    if (!allDefined(data, ['user', 'password', 'database']) || !allStrings(data, ['user', 'password', 'database'])) {
       throw new Error('Invalid postgres config');
     }
     this.user = data.user;

@@ -2,6 +2,8 @@ import * as cheerio from 'cheerio';
 import { Client, Host } from '../general/abstract_client.js';
 import { crawlerConfig as config } from '../general/config/config_singleton.js';
 import { ifDefined, toAbsolute } from '../general/utils.js';
+import { store } from './state/store.js';
+import * as targets from './state/targetsSlice.js';
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -23,18 +25,16 @@ const CONTENT_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li'];
   );
 * @param res Response object to inspect. Should contain data as a Buffer and headers in form of an object.
 * @param source Response source
-* @param targets Array to append any discovered links to
+* @param db DB client to save results by
 */
 export async function inspect(
   res: { data:Buffer, headers:{ [key: string]: string } }, 
-  source: string, targets?: string[], db?:Client 
+  source: string, db?:Client 
 ): Promise<Host> {
   let $:cheerio.CheerioAPI;
   $ = load(res, source);
 
-  if (targets !== undefined) {
-    findLinks($, source, targets);
-  }
+  findLinks($, source);
   
   // TODO if source is IP addr, do reverse DNS
   
@@ -138,13 +138,11 @@ function getKeywords(headers: { [key: string]: string; }) {
   return keywords;
 }
 
-function findLinks($: cheerio.CheerioAPI, source: string, targets: string[]) {
+function findLinks($: cheerio.CheerioAPI, source: string) {
   $('[href]').each((i, elem) => {
     ifDefined(elem.attribs.href, val => {
       val = toAbsolute(val, source);
-      if (targets.indexOf(val) === -1) {
-        targets.push(val);
-      }
+      store.dispatch(targets.push(val));
     });
   });
 }

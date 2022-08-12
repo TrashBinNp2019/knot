@@ -45,6 +45,7 @@ npm run page-dev
 
 # Roadmap
 
+- Reach and retain 100% coverage
 - Integrate more well-developed libraries for code quality:
   - Redux
 - Add support for other media (images, etc.)

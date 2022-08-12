@@ -2,6 +2,8 @@ import * as db from '../general/postgres_client.js';
 import * as engine from './engine.js';
 import * as iface from './interface.js';
 import { crawlerConfig as config } from '../general/config/config_singleton.js';
+import { store } from './state/store.js';
+import * as pausable from './state/pausableSlice.js';
 
 let targets:string[] = [];
 
@@ -12,41 +14,31 @@ db.test().then((err) => {
   }
 
   if (config.use_web_interface) {
-    const server = iface.init(() => ({
-      paused: engine.isPaused(),
-    }));
+    const server = iface.init();
 
     engine.on('log', (...args:any[]) => {
       server.emit(iface.Events.log, ...args);
     });
+    // equivalent to targets.shift!
     engine.on('examined', (count:number) => {
       server.emit(iface.Events.examined, count);
     });
     engine.on('valid', (count) => {
+      
       server.emit(iface.Events.valid, count);
     });
-    engine.on('pause', (paused:boolean) => {
-      server.emit(iface.Events.pause, paused);
+    engine.on('pause', () => {
+      server.emit(iface.Events.pause);
     });
 
     server.on('pause', () => {
-      if (!engine.isPaused()) {
-          engine.isPaused(true);
+      if (!store.getState().pausable.paused) {
+        store.dispatch(pausable.pauseRequested({}));
       } else {
-        engine.start({ db: db, targets: targets }).then((tgts) => {
-          targets = tgts;
-        }).catch(err => {
-          console.log(err.message);
-          process.exit(1);
-        });
+        engine.start({ db: db });
       }
     });
   }
 
-  engine.start({ db: db }).then((tgts) => {
-    targets = tgts;
-  }).catch(err => {
-    console.log(err.message);
-    process.exit(1);
-  });
+  engine.start({ db: db });
 });

@@ -89,6 +89,18 @@ export function toAbsolute(hl:string, base:string):string | undefined {
 */
 export function generateIps(count:number):string[] {
   return Array(count).fill(0).map(() => 
-    (String(Math.floor(Math.random() * 255)) + '.').repeat(4).slice(0, -1)
+    Array(4).fill(0).map(() => String(Math.floor(Math.random() * 255))).join('.')
   );
+}
+
+// TODO improve this to 1) ignore small differences and 2) use a rolling average
+export function calculatePerMinute(prev:number, prevRate:number, count:number) {
+  const curr = Number(new Date());
+  let diff = Math.max(curr - prev, 10);
+  // console.log(prevRate, diff, count / diff * 1000 * 60, (prevRate * 100 + (count / (diff / 1000 / 60))) / 101);
+  if (prevRate === 0) {
+    return count / diff * 1000 * 60;
+  } else {
+    return (prevRate * 10 + (count / (diff / 1000 / 60))) / 11;
+  }
 }
