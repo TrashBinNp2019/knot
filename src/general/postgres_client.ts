@@ -13,53 +13,47 @@ export async function test() {
     return undefined;
   } catch (err) {
     if (err.code === '42P01') {
-      try {
-        await pool.query(`CREATE TABLE hosts (
-          title VARCHAR(128) NOT NULL,
-          addr VARCHAR(128) NOT NULL,
-          contents TEXT NOT NULL,
-          keywords VARCHAR(256) NOT NULL,
-          timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )`);
-        return undefined;
-      } catch(e) {
-        return e;
-      }
+      createTable();
     } else {
       return err;
     }
   }
 }
-  
-  export function push(host:Host) {
-    host.title = prep.forSql(host.title).substring(0, 128);
-    host.addr = prep.forSql(host.addr).substring(0, 128);
-    host.contents = prep.forSql(host.contents);
-    if (host.contents.length > 65534) {
-      host.contents = host.contents.substring(0, 65534);
-    }
-    host.keywords = prep.forSql(host.keywords).substring(0, 256);
 
-    pool.query(
-      `INSERT INTO hosts (title, addr, contents, keywords) VALUES (
-        '${host.title}', 
-        '${host.addr}', 
-        '${host.contents}', 
-        '${host.keywords}'
-      )`, 
-      (err, res) => 
-      {
-        if (err) throw err;
-      });
-    }
+export function push(host:Host) {
+  host.title = prep.forSql(host.title).substring(0, 128);
+  host.addr = prep.forSql(host.addr).substring(0, 128);
+  host.contents = prep.forSql(host.contents);
+  if (host.contents.length > 65534) {
+    host.contents = host.contents.substring(0, 65534);
+  }
+  host.keywords = prep.forSql(host.keywords).substring(0, 256);
+  
+  pool.query(
+    `INSERT INTO hosts (title, addr, contents, keywords) VALUES (
+      '${host.title}', 
+      '${host.addr}', 
+      '${host.contents}', 
+      '${host.keywords}')`, 
+    (err, res) => { if (err) throw err; }
+  );
+}
     
-    export async function get() {
-      return (await pool.query('SELECT title, addr FROM hosts')).rows;
-    }
+export async function get() {
+  return (await pool.query('SELECT title, addr FROM hosts')).rows;
+}
     
-    export async function search(q:string) {
-      let query = `SELECT title, addr, contents, keywords FROM hosts WHERE title iLIKE $1 OR contents LIKE $1`;
-      return (
-        await pool.query(query, ['% ' + prep.forSql(q) + ' %'])
-      ).rows;
-    }
+export async function search(q:string) {
+  let query = `SELECT title, addr, contents, keywords FROM hosts WHERE title iLIKE $1 OR contents LIKE $1`;
+  return (await pool.query(query, ['% ' + prep.forSql(q) + ' %'])).rows;
+}
+    
+async function createTable() {
+  await pool.query(`CREATE TABLE hosts (
+    title VARCHAR(128) NOT NULL,
+    addr VARCHAR(128) NOT NULL,
+    contents TEXT NOT NULL,
+    keywords VARCHAR(256) NOT NULL,
+    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`);
+}

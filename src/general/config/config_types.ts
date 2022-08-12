@@ -12,7 +12,7 @@ class Writable {
   write(path:string) {
     fs.writeFileSync(path, JSON.stringify(this.writeExcluded(), null, 2));
   };
-
+  
   writeExcluded(): any {
     let {write, ...data} = this;
     return data;
@@ -29,6 +29,12 @@ export class CrawlerConfig extends Writable implements Readable {
   
   constructor(data:any) {
     super();
+
+    let to = parseTime(data.request_timeout);
+    if (to === undefined) {
+      console.log('Invalid request_timeout');
+    }
+
     this.request_timeout = parseTime(data.request_timeout) ?? 5000;
     this.targets_cap = parseInt(data.targets_cap) || 1000;
     this.use_web_interface = data.use_web_interface ?? true;
@@ -141,20 +147,26 @@ function parseTime(val:any): number | undefined {
     } 
     
     case ('string'): {
-      let match = val.match(/^(\d+)([mshd])$/);
-      if (match) {
-        let [, num, unit] = match;
-        switch (unit) {
-          case 'm': return parseInt(num) * 60 * 1000;
-          case 'h': return parseInt(num) * 60 * 60 * 1000;
-          case 'd': return parseInt(num) * 24 * 60 * 60 * 1000;
-          case 's': return parseInt(num) * 1000;
-          case 'ms': return parseInt(num);
-        }
-      }
+      return parseTimeString(val);
     }
   }
   
-  console.log('- Invalid request_timeout');
+  return undefined;
+}
+
+function parseTimeString(val:string): number | undefined {
+  let match = val.match(/^(\d+)(ms|[mshd])$/);
+  
+  if (match) {
+    let [, num, unit] = match;
+    switch (unit) {
+      case 'm': return parseInt(num) * 60 * 1000;
+      case 'h': return parseInt(num) * 60 * 60 * 1000;
+      case 'd': return parseInt(num) * 24 * 60 * 60 * 1000;
+      case 's': return parseInt(num) * 1000;
+      case 'ms': return parseInt(num);
+    }
+  }
+
   return undefined;
 }
