@@ -26,7 +26,7 @@ suite('Crawler', () => {
     let expected = readDirSync('src/crawler');
     expected = expected.map(file => file.replace(/.ts$/, '.js'));
     let actual = readDirSync('build/crawler');
-    assert.deepEqual(actual, expected);
+    assert.deepEqual(actual.sort(), expected.sort());
   });
 
 });
@@ -36,7 +36,7 @@ suite('Page', () => {
     let expected = readDirSync('src/page');
     expected = expected.map(file => file.replace(/.ts$|.jsx$/, '.js'));
     let actual = readDirSync('build/page');
-    assert.deepEqual(actual, expected);
+    assert.deepEqual(actual.sort(), expected.sort());
   });
 });
 
@@ -46,6 +46,6 @@ suite('General', () => {
     expected = expected.map(file => file.replace(/.ts$/, '.js'));
     expected.push('public/prep-string.js');
     let actual = readDirSync('build/general');
-    assert.deepEqual(actual, expected);
+    assert.deepEqual(actual.sort(), expected.sort());
   });
 });

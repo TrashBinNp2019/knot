@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { parseTime } from '../utils.js';
 
 // Interfaces dosn't work smh :/
 class Readable {
@@ -35,7 +36,7 @@ export class CrawlerConfig extends Writable implements Readable {
       console.log('Invalid request_timeout');
     }
 
-    this.request_timeout = parseTime(data.request_timeout) ?? 5000;
+    this.request_timeout = to ?? 5000;
     this.targets_cap = parseInt(data.targets_cap) || 1000;
     this.use_web_interface = data.use_web_interface ?? true;
     this.web_interface_port = parseInt(data.web_interface_port) || 8080;
@@ -130,43 +131,4 @@ function allStrings(obj:any, keys:string[]) {
     }
   }
   return true;
-}
-
-// TODO test this!
-/**
-* Attempts to convert arg to ms. 
-* Accepted inputs: number, \d+ms, \d+s, \d+m, \d+h, \d+d. 
-* @example parseTime('1000ms') => 1000
-* @param val Value to parse
-* @returns Parsed milliseconds, undefined if invalid
-*/
-function parseTime(val:any): number | undefined {
-  switch (typeof val) {
-    case ('number') : {
-      return val;
-    } 
-    
-    case ('string'): {
-      return parseTimeString(val);
-    }
-  }
-  
-  return undefined;
-}
-
-function parseTimeString(val:string): number | undefined {
-  let match = val.match(/^(\d+)(ms|[mshd])$/);
-  
-  if (match) {
-    let [, num, unit] = match;
-    switch (unit) {
-      case 'm': return parseInt(num) * 60 * 1000;
-      case 'h': return parseInt(num) * 60 * 60 * 1000;
-      case 'd': return parseInt(num) * 24 * 60 * 60 * 1000;
-      case 's': return parseInt(num) * 1000;
-      case 'ms': return parseInt(num);
-    }
-  }
-
-  return undefined;
 }
