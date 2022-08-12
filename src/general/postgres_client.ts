@@ -2,7 +2,7 @@ import pg from 'pg';
 import * as fs from 'fs';
 import { Host } from './abstract_client.js';
 import { postgresConfig as config } from './config/config_singleton.js';
-import * as prep from './prep-string.js'
+import * as prep from './prep-string.js';
 const { Pool } = pg;
 
 const pool = new Pool(config.writeExcluded());
@@ -20,7 +20,7 @@ export async function test() {
   }
 }
 
-export function push(host:Host) {
+export function push(host: Host) {
   host.title = prep.forSql(host.title).substring(0, 128);
   host.addr = prep.forSql(host.addr).substring(0, 128);
   host.contents = prep.forSql(host.contents);
@@ -43,7 +43,7 @@ export async function get() {
   return (await pool.query('SELECT title, addr FROM hosts')).rows;
 }
     
-export async function search(q:string) {
+export async function search(q: string) {
   let query = `SELECT title, addr, contents, keywords FROM hosts WHERE title iLIKE $1 OR contents LIKE $1`;
   return (await pool.query(query, ['% ' + prep.forSql(q) + ' %'])).rows;
 }

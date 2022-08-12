@@ -6,9 +6,9 @@ import * as fs from 'fs';
  * @param dir Directory to read
  * @returns File names in the directory, including subdirectories
  */
-const readDirSync = (dir:string) => {
+const readDirSync = (dir: string) => {
   // TODO redo as async
-  let output:string[] = [];
+  let output: string[] = [];
   fs.readdirSync(dir, { withFileTypes: true }).forEach(file => {
     if (file.isFile()) {
       output.push(file.name);

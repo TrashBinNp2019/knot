@@ -28,7 +28,7 @@ $(document).ready(function() {
       obj = JSON.parse(data);
       obj.title = forHtml(obj.title);
       obj.addr = forHtml(obj.addr);
-      obj.contents_length = parseInt(obj.contents_length) || 0;
+      obj.contents_length = parseInt(obj.contents_length, 10) || 0;
     }
     if ('title' in obj && 'addr' in obj && 'contents_length' in obj) {
       $('.logs').append(`<li><a href=${obj.addr}>${obj.title}</a>. Contents length: ${obj.contents_length}</li>`);
@@ -41,22 +41,22 @@ $(document).ready(function() {
   });
 
   socket.on('examined', function(total, pm) {
-    examined_total = parseInt(total) || 0;
+    examined_total = parseInt(total, 10) || 0;
     $('#examined-total').text(examined_total);
-    $('#epm').text(parseInt(pm) || 0);
+    $('#epm').text(parseInt(pm, 10) || 0);
     updateSuccess();
   });
 
   socket.on('valid', function(total) {
-    valid_total = parseInt(total) || 0;
+    valid_total = parseInt(total, 10) || 0;
     $('#valid-total').text(valid_total);
-    let vpm = rate * (parseInt($('#epm').text()) || 0);
-    $('#vpm').text(rate > 1 || rate < 0.1? parseInt(rate) : parseFloat(rate).toFixed(1));
+    let vpm = rate * (parseInt($('#epm').text(), 10) || 0);
+    $('#vpm').text(rate > 1 || rate < 0.1? parseInt(rate, 10) : parseFloat(rate).toFixed(1));
     updateSuccess();
   });
 
   socket.on('cap', (val) => {
-    prev_cap = parseInt(val) || prev_cap;
+    prev_cap = parseInt(val, 10) || prev_cap;
     prev_valid_cap = String(val);
     $('#update-cap').attr('disabled', 'true');
     $('#cap').attr('value', val);
@@ -72,13 +72,13 @@ $(document).ready(function() {
     if (/\D/.test($('#cap').val()) || $('#cap').val() === '') {
       $('#cap').val(prev_valid_cap);
     }
-    $('#update-cap').attr('disabled', prev_cap === parseInt($('#cap').val()));
+    $('#update-cap').attr('disabled', prev_cap === parseInt($('#cap').val(), 10));
     prev_valid_cap = $('#cap').val();
   });
 
   $('#update-cap').click(function() {
     let val = $('#cap').val();
-    val = parseInt(val);
+    val = parseInt(val, 10);
     socket.emit('cap', val);
     $('#update-cap').attr('disabled', 'true');
   });

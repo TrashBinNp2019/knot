@@ -18,22 +18,22 @@ class ServerWrapper {
   private io: Server;  
   private callbacks: Map<string, ((...args: any) => void)[]>;
   
-  constructor(io:Server) {
+  constructor(io: Server) {
     this.callbacks = new Map<string, ((...args: any) => void)[]>();
     this.io = io;
     
     io.on("connection", this.onNewConnection);
   }
 
-  private onNewConnection(socket:Socket):void {
+  private onNewConnection(socket: Socket): void {
     socket.emit(Events.examined, store.getState().general.examined_total, store.getState().general.examined_pm);
     socket.emit(Events.valid, store.getState().general.valid_total);
     socket.emit(Events.cap, config.targets_cap);
     socket.emit(Events.pause, store.getState().pausable.paused);
     
     socket.on('cap', (count) => {
-      count = parseInt(count) || config.targets_cap;
-      config.targets_cap = count > 50000 ? 50000 : count
+      count = parseInt(count, 10) || config.targets_cap;
+      config.targets_cap = count > 50000 ? 50000 : count;
       this.io.emit(Events.cap, config.targets_cap);
     });
     
@@ -42,7 +42,7 @@ class ServerWrapper {
     });
     
     for (const key in Events) {
-      socket.on(key, (...args:any[]) => {
+      socket.on(key, (...args: any[]) => {
         if (this.callbacks.get(key) !== undefined) {
           this.callbacks.get(key).forEach(fun => fun(...args));
         }
@@ -50,8 +50,8 @@ class ServerWrapper {
     }
   }
   
-  emit(event:string, ...args:any[]): void {
-    let arg:any = args[0];
+  emit(event: string, ...args: any[]): void {
+    let arg: any = args[0];
     
     switch (event) {
       case Events.examined:
@@ -70,7 +70,7 @@ class ServerWrapper {
     this.io.emit(event, ...arg);
   }
   
-  on (event:string, listener:(...args:any) => void): void {
+  on (event: string, listener: (...args: any) => void): void {
     if (!Events[event]) {
       throw new Error('Unknown event: ' + event);
     }
@@ -96,10 +96,10 @@ function startHttpServer() {
 }
 
 /**
-* Reduces args to a string via JSON.stringify.
-* @param args Objects to convert
-* @returns String representation of args
-*/
+ * Reduces args to a string via JSON.stringify.
+ * @param args Objects to convert
+ * @returns String representation of args
+ */
 function reduce(args: any[]) {
   let message: string;
   if (args.length > 1) {

@@ -13,32 +13,29 @@ const CONTENT_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li'];
  * Inspect the response and extract title, contents and futher possible targets
  * @example 
  * inspect({ 
-      data: Buffer.from('<html><body><p>Hello</p></body></html>'),
-      headers: { 
-        'content-type': 'text/html', 
-      },
-    }, 'http://example.com/2', ['http://example.com/1', 'http://example.com/2',],
-    {
-      test: async () => undefined,
-      push: (host) => {console.log(host)},
-    },
-  );
-* @param res Response object to inspect. Should contain data as a Buffer and headers in form of an object.
-* @param source Response source
-* @param db DB client to save results by
-*/
+ *     data: Buffer.from('<html><body><p>Hello</p></body></html>'),
+ *     headers: { 'content-type': 'text/html', },
+ *   }, 'http://example.com/2', ['http://example.com/1', 'http://example.com/2',],{
+ *     test: async () => undefined,
+ *     push: (host) => {console.log(host)},
+ *   },
+ * );
+ * @param res Response object to inspect. Should contain data as a Buffer and headers in form of an object.
+ * @param source Response source
+ * @param db DB client to save results by
+ */
 export async function inspect(
-  res: { data:Buffer, headers:{ [key: string]: string } }, 
-  source: string, db?:Client 
+  res: { data: Buffer, headers: { [key: string]: string } }, 
+  source: string, db?: Client 
 ): Promise<Host> {
-  let $:cheerio.CheerioAPI;
+  let $: cheerio.CheerioAPI;
   $ = load(res, source);
 
   findLinks($, source);
   
   // TODO if source is IP addr, do reverse DNS
   
-  let host:Host = {
+  const host: Host = {
     title: getTitle($, source),
     addr: source,
     contents: getContents($, res),
@@ -49,7 +46,7 @@ export async function inspect(
   return host;
 }
 
-function load(res: { data:Buffer, headers:{ [key: string]: string } }, source: string) {
+function load(res: { data: Buffer, headers: { [key: string]: string } }, source: string) {
   let $ = cheerio.load(res.data);
 
   if (isEmpty($) && config.unsafe) {

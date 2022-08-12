@@ -24,5 +24,5 @@ const pausableSlice = createSlice({
   }
 })
 
-export const { pauseRequested, paused, resumed } = pausableSlice.actions
-export default pausableSlice.reducer
+export const { pauseRequested, paused, resumed } = pausableSlice.actions;
+export default pausableSlice.reducer;

@@ -3,16 +3,16 @@ import { parseTime } from '../utils.js';
 
 // Interfaces don't work smh :/
 class Readable {
-  public static read(path:string): Readable {
+  public static read(path: string): Readable {
     ensureExists(path);
     return ensureValid(fs.readFileSync(path, 'utf8'));
   };
 }
 
 class Writable {
-  write(path:string) {
+  write(path: string) {
     fs.writeFileSync(path, JSON.stringify(this.writeExcluded(), null, 2));
-  };
+  }
   
   writeExcluded(): any {
     let {write, ...data} = this;
@@ -29,7 +29,7 @@ export class CrawlerConfig extends Writable implements Readable {
   public log_to_console: boolean;
   public generate_random_targets: boolean;
   
-  constructor(data:any) {
+  constructor(data: any) {
     super();
 
     let to = parseTime(data.request_timeout);
@@ -38,9 +38,9 @@ export class CrawlerConfig extends Writable implements Readable {
     }
 
     this.request_timeout = to ?? 5000;
-    this.targets_cap = parseInt(data.targets_cap) || 1000;
+    this.targets_cap = parseInt(data.targets_cap, 10) || 1000;
     this.use_web_interface = data.use_web_interface ?? true;
-    this.web_interface_port = parseInt(data.web_interface_port) || 8080;
+    this.web_interface_port = parseInt(data.web_interface_port, 10) || 8080;
     this.unsafe = data.unsafe ?? false;
     this.log_to_console = data.log_to_console ?? true;
     this.generate_random_targets = data.generate_random_targets ?? true;
@@ -58,9 +58,9 @@ export class CrawlerConfig extends Writable implements Readable {
 export class PageConfig extends Writable implements Readable {
   public port: number; 
   
-  constructor(data:any) {
+  constructor(data: any) {
     super();
-    this.port = parseInt(data.port) || 8080;
+    this.port = parseInt(data.port, 10) || 8080;
   }
   
   public static read(): PageConfig {
@@ -79,7 +79,7 @@ export class PostgresConfig extends Writable implements Readable {
   public port: number;
   public database: string;
   
-  constructor(data:any) {
+  constructor(data: any) {
     super();
     if (!allDefined(data, ['user', 'password', 'database']) || !allStrings(data, ['user', 'password', 'database'])) {
       throw new Error('Invalid postgres config');
@@ -87,7 +87,7 @@ export class PostgresConfig extends Writable implements Readable {
     this.user = data.user;
     this.password = data.password;
     this.host = data.host ?? 'localhost';
-    this.port = parseInt(data.port) ?? 5432;
+    this.port = parseInt(data.port, 10) ?? 5432;
     this.database = data.database;
   }
   
@@ -100,22 +100,22 @@ export class PostgresConfig extends Writable implements Readable {
   }
 }
 
-function ensureExists(path:string) {
+function ensureExists(path: string) {
   if (!fs.existsSync(path)) {
     fs.writeFileSync(path, '{\n}');
   }
 }
 
-function ensureValid(data:string) {
+function ensureValid(data: string) {
   try {
     return JSON.parse(data);
   } catch(e) {
-    console.log('- Config error:', e.message);
+    console.log('- Config error: ', e.message);
     return {};
   }
 }
 
-function allDefined(obj:any, keys:string[]) {
+function allDefined(obj: any, keys: string[]) {
   for (let key of keys) {
     if (obj[key] === undefined) {
       console.log(`- ${key} undefined!`);
@@ -125,7 +125,7 @@ function allDefined(obj:any, keys:string[]) {
   return true;
 }
 
-function allStrings(obj:any, keys:string[]) {
+function allStrings(obj: any, keys: string[]) {
   for (let key of keys) {
     if (typeof obj[key] !== 'string') {
       console.log(`- ${key} not a string!`);

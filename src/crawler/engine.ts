@@ -2,21 +2,23 @@ import { AxiosResponse, default as axios } from 'axios';
 import { Client } from '../general/abstract_client.js';
 import { Events } from './interface.js';
 import { crawlerConfig as config } from '../general/config/config_singleton.js';
-import { inspect } from './inspect.js'
+import { inspect } from './inspect.js';
 import { store } from './state/store.js';
 import * as pausable from './state/pausableSlice.js';
 import * as targets from './state/targetsSlice.js';
 
-let listeners:Map<string, ((...args:any) => void)[]> = new Map();
+let listeners: Map<string, ((...args: any) => void)[]> = new Map();
 
 export function clearListeners() {
   for (const key in Events) {
-    listeners.set(key, []);
+    if (Events.hasOwnProperty(key)) {
+      listeners.set(Events[key], []);
+    }
   }
 };
 clearListeners();
 
-function log(...args:any[]) {
+function log(...args: any[]) {
   if (config.log_to_console) { 
     console.log('-', ...args);
   }
@@ -40,7 +42,7 @@ function pause() {
  * @param event Event to add listener to. Must be a key in Events
  * @param callback Listener to add
  */
-export function on(event:string, callback: (...args:any) => void) {
+export function on(event: string, callback: (...args: any) => void) {
   if (!listeners.has(event)) {
     throw new Error('Unknown event: ' + event);
   }
@@ -62,7 +64,7 @@ export class StartOptions {
  * @param options Options for the crawler.
  * @returns Array of targets, discovered or generated, after the last step
  */
-export async function start(options:StartOptions) {
+export async function start(options: StartOptions) {
   let db = options.db;
   let repetitions = options.repetitions ?? -1;
   // TODO implement
@@ -75,7 +77,7 @@ export async function start(options:StartOptions) {
   } else {
     log('Starting');
     options.targets?.forEach(target => {
-      store.dispatch(targets.push({ target }))
+      store.dispatch(targets.push({ target }));
     });
   }
 
@@ -103,12 +105,12 @@ export async function start(options:StartOptions) {
 }
 
 /**
-* Scan targets for any web pages and new targets, passing results to a db client
-* @param db Database client
-*/
-export async function crawl(db?:Client) {
+ * Scan targets for any web pages and new targets, passing results to a db client
+ * @param db Database client
+ */
+export async function crawl(db?: Client) {
   await Promise.allSettled(validate(store.getState().targets.curr).map(async target => ({ 
-    res: await axios.get(target, { timeout: config.request_timeout } ), 
+    res: await axios.get(target, { timeout: config.request_timeout }), 
     target,
   }))).then(async results => {
     handleResults(results, db);
@@ -129,7 +131,7 @@ function handleResults(results: PromiseSettledResult<{ res: AxiosResponse<any, a
 
 function handleError(result: PromiseRejectedResult) {
   // TODO treat err bad response as valid ? perhaphs
-  let e = result.reason;
+  const e = result.reason;
   if (e.code !== 'ECONNABORTED' &&
     e.code !== 'EADDRNOTAVAIL' &&
     e.code !== 'ENETUNREACH' &&

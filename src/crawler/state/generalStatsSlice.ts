@@ -25,5 +25,5 @@ const generalStatsSlice = createSlice({
   }
 })
 
-export const { valid, examined, resetTime } = generalStatsSlice.actions
-export default generalStatsSlice.reducer
+export const { valid, examined, resetTime } = generalStatsSlice.actions;
+export default generalStatsSlice.reducer;

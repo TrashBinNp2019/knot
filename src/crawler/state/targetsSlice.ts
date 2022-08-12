@@ -33,5 +33,5 @@ const targetsSlice = createSlice({
   }
 })
 
-export const { push, shift, clear } = targetsSlice.actions
-export default targetsSlice.reducer
+export const { push, shift, clear } = targetsSlice.actions;
+export default targetsSlice.reducer;
