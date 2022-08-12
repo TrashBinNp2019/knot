@@ -1,7 +1,7 @@
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import * as config from "./config.js";
+import { crawlerConfig as config } from "../general/config/config_singleton";
 
 export const Events = {
    log: 'log', 
@@ -38,12 +38,13 @@ export function init(state:() => { paused:boolean }) {
   io.on("connection", (socket) => {
     socket.emit(Events.examined, examined_total, examined_pm);
     socket.emit(Events.valid, valid_total);
-    socket.emit(Events.cap, config.targetsCap());
+    socket.emit(Events.cap, config.targets_cap);
     socket.emit(Events.pause, state().paused);
 
     socket.on('cap', (count) => {
-      count = parseInt(count) || config.targetsCap();
-      io.emit(Events.cap, config.targetsCap(count > 50000 ? 50000 : count));
+      count = parseInt(count) || config.targets_cap;
+      config.targets_cap = count > 50000 ? 50000 : count
+      io.emit(Events.cap, config.targets_cap);
     });
 
     socket.on('pause', () => {
@@ -100,7 +101,7 @@ export function init(state:() => { paused:boolean }) {
     throw new Error('Unknown event: ' + event);
   }
 
-  httpServer.listen(config.ifacePort());
+  httpServer.listen(config.web_interface_port);
   return { emit, on };
 }
 

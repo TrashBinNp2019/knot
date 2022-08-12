@@ -3,10 +3,10 @@ import bodyParser from 'body-parser';
 import * as db from '../general/postgres_client.js';
 import * as fs from 'fs';
 import helmet from 'helmet';
+import { pageConfig as config } from '../general/config/config_singleton.js';
 
-const config = JSON.parse(fs.readFileSync('./config/page-config.json', 'utf8'));
 const app = express();
-const port = config.port ?? 3000;
+const port = config.port;
 
 if (process.env.NODE_ENV !== 'dev') {
   app.use(helmet({

@@ -1,25 +1,11 @@
 import pg from 'pg';
 import * as fs from 'fs';
 import { Host } from './abstract_client.js';
+import { postgresConfig as config } from './config/config_singleton.js';
 import * as prep from './prep-string.js'
 const { Pool } = pg;
 
-const config = JSON.parse(fs.readFileSync('./config/postgres-config.json', 'utf8'));
-if (config.user === undefined) {
-  console.log('- Postgres user name not found in postgres-config.json');
-  process.exit(1);
-}
-if (config.password === undefined) {
-  console.log('- Postgres password not found in postgres-config.json');
-  process.exit(1);
-}
-const pool = new Pool({
-  user: config.user,
-  host: config.host ?? 'localhost',
-  database: config.database ?? 'knot',
-  password: config.password,
-  port: config.port ?? 5432,
-});
+const pool = new Pool(config);
 
 export async function test() {
   try {

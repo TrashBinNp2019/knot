@@ -2,37 +2,39 @@ import { AxiosResponse, default as axios } from 'axios';
 import * as cheerio from 'cheerio';
 import { Client, Host } from '../general/abstract_client.js';
 import { Events } from './interface.js';
-import * as config from './config.js';
+import { crawlerConfig as config } from '../general/config/config_singleton.js';
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
 const CONTENT_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li'];
-
 let paused = false;
 let pauseRequested = false;
+let listeners:Map<string, ((...args:any) => void)[]> = new Map();
 
-let callbacks:Map<string, ((...args:any) => void)[]> = new Map();
-for (const key in Events) {
-  callbacks.set(key, []);
-}
+export function clearListeners() {
+  for (const key in Events) {
+    listeners.set(key, []);
+  }
+};
+clearListeners();
 
 function log(...args:any[]) {
-  if (config.logToConsole()) { 
+  if (config.log_to_console) { 
     console.log('-', ...args);
   }
-  callbacks.get(Events.log).forEach(callback => callback(...args));
+  listeners.get(Events.log).forEach(callback => callback(...args));
 }
 
 function examined(count: number) {
-  callbacks.get(Events.examined).forEach(callback => callback(count));
+  listeners.get(Events.examined).forEach(callback => callback(count));
 }
 
 function valid() {
-  callbacks.get(Events.valid).forEach(callback => callback(1));
+  listeners.get(Events.valid).forEach(callback => callback(1));
 }
 
 function pause() {
-  callbacks.get(Events.pause).forEach(callback => callback(paused));
+  listeners.get(Events.pause).forEach(callback => callback(paused));
 }
 
 export function isPaused(flag?:boolean) {
@@ -48,11 +50,11 @@ export function isPaused(flag?:boolean) {
  * @param callback Listener to add
  */
 export function on(event:string, callback: (...args:any) => void) {
-  if (!callbacks.has(event)) {
+  if (!listeners.has(event)) {
     throw new Error('Unknown event: ' + event);
   }
 
-  callbacks.get(event).push(callback);
+  listeners.get(event).push(callback);
   return this;
 }
 
@@ -108,20 +110,25 @@ export function toAbsolute(hl:string, base:string):string | undefined {
 }
 
 export class StartOptions {
+  // TODO documentate
   db?: Client;
   targets?: string[];
-  repetitions?: number
+  repetitions?: number;
+  generate_random_targets?: boolean;
+  // TODO "4h" or "4m" or "4s" (parse in a separate tested function) 
+  // run_for?: string;
 }
 
 /**
  * Starts the crawler.
- * @param options DB client, targets array and repetitions count - none are necessary
+ * @param options Options for the crawler.
  * @returns Array of targets, discovered or generated, after the last step
  */
 export async function start(options:StartOptions) {
   let db = options.db;
   let targets = options.targets ?? [];
   let repetitions = options.repetitions ?? -1;
+  let generate_random_targets = options.generate_random_targets ?? true;
 
   if (paused) {
     log('Resuming');
@@ -129,17 +136,31 @@ export async function start(options:StartOptions) {
     pause();
   }
 
+  function generate(count:number) {
+    return Array(count).fill(0).map(() => generateIp());
+  }
+
   while (repetitions !== 0 && !pauseRequested) {
+    if (targets.length === 0) {
+      if (generate_random_targets) {
+        targets = generate(config.targets_cap);
+      } else {
+        log('No targets detected');
+        break;
+      }
+    }
     let new_targets = await crawl(targets, db);
 
     if (new_targets.length !== 0) {
       log(`Detected ${new_targets.length} new targets`);
     }
-    if (new_targets.length < config.targetsCap()) {
-      new_targets = [...new_targets, ...Array(config.targetsCap() - new_targets.length).fill(0).map(() => generateIp())];
+    if (new_targets.length < config.targets_cap) {
+      if (generate_random_targets) {
+        new_targets = [...new_targets, ...generate(config.targets_cap - new_targets.length)];
+      }
     } else {
       log('Too many targets detected, dropping');
-      new_targets = Array(config.targetsCap()).fill(0).map(() => generateIp());
+      new_targets = Array(config.targets_cap).fill(0).map(() => generateIp());
     }
     examined(targets.length);
 
@@ -173,7 +194,7 @@ export async function crawl(targets:string[], db?:Client) {
     });
     let promises = targets.map(async (target) => {
       try {
-        let response = await axios.get(target, { timeout: config.timeout() });
+        let response = await axios.get(target, { timeout: config.request_timeout });
         return { res: response, target: target };
       }
       catch (e:any) {
@@ -253,7 +274,7 @@ export function inspect(res: { data:Buffer, headers:{ [key: string]: string } },
   });
   
   // If nothing was found on the page, try running scripts
-  if (!/[^\s]/.test(contents) && config.unsafe()) {
+  if (!/[^\s]/.test(contents) && config.unsafe) {
     const { window } = new JSDOM(res.data, {
       runScripts: "dangerously",
       resources: "usable",

@@ -1,7 +1,7 @@
 import * as db from '../general/postgres_client.js';
 import * as engine from './engine.js';
 import * as iface from './interface.js';
-import * as config from './config.js';
+import { crawlerConfig as config } from '../general/config/config_singleton.js';
 
 let targets:string[] = [];
 
@@ -11,7 +11,7 @@ db.test().then((err) => {
     process.exit(1);
   }
 
-  if (config.useWebIface()) {
+  if (config.use_web_interface) {
     const server = iface.init(() => ({
       paused: engine.isPaused(),
     }));
