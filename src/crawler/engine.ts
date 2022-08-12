@@ -320,7 +320,6 @@ export function inspect(res: { data:Buffer, headers:{ [key: string]: string } },
   }
   
   contents += extras;
-  contents = contents.replace(/[\n]+/g, ' ');
   contents = contents.replace(/\s+/g, ' ');
   if (contents.length > 65534) {
     contents = contents.substring(0, 65534);
@@ -348,7 +347,6 @@ export function inspect(res: { data:Buffer, headers:{ [key: string]: string } },
   } else if (title.length > 100) {
     title = title.substring(0, 100) + '...';
   }
-  title = title.replace(/[\n'"`]+/gi, ' ');
   title = title.replace(/\s+/g, ' ');
   
   // TODO parse forms?
@@ -369,7 +367,6 @@ export function inspect(res: { data:Buffer, headers:{ [key: string]: string } },
     // log(`${keywords.length} symbols gathered from headers`);
   }
   
-  keywords = keywords.replace(/[\n]+/g, ' ');
   keywords = keywords.replace(/\s+/g, ' ');
   keywords += ' ';
   keywords = keywords.substring(0, 255);
@@ -381,3 +378,4 @@ export function inspect(res: { data:Buffer, headers:{ [key: string]: string } },
   }
   valid();
 }
+

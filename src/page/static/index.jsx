@@ -61,16 +61,8 @@ class Result extends React.Component {
         content = forHtml(content);
         keywords = forHtml(keywords);
         
-        if (content.length === 0) {
-            content = '-';
-        } else if (content.length > 50) {
-            content = content.substring(0, 50) + '...';
-        }
-        if (keywords.length === 0) {
-            keywords = '-';
-        } else if (keywords.length > 20) {
-            keywords = keywords.substring(0, 50) + '...';
-        }
+        content = displayable(content, 50);
+        keywords = displayable(keywords, 20);
 
         return (
             <div className='resultBox'>
@@ -133,3 +125,16 @@ const root = ReactDOM.createRoot(rootNode);
 root.render(
     <App />
 );
+
+function displayable(str, max_length) {
+    if (typeof str !== 'string') {
+        return '-';
+    }
+
+    if (str.length === 0) {
+        str = '-';
+    } else if (str.length > max_length) {
+        str = str.substring(0, max_length - 3) + '...';
+    }
+    return str;
+}

@@ -8,11 +8,18 @@ class Readable {
   };
 }
 
-interface Writable {
-  write: () => void;
+class Writable {
+  write(path:string) {
+    fs.writeFileSync(path, JSON.stringify(this.writeExcluded(), null, 2));
+  };
+
+  writeExcluded(): any {
+    let {write, ...data} = this;
+    return data;
+  }
 }
 
-export class CrawlerConfig extends Readable implements Writable {
+export class CrawlerConfig extends Writable implements Readable {
   public request_timeout: number;
   public targets_cap: number;
   public use_web_interface: boolean;
@@ -31,16 +38,15 @@ export class CrawlerConfig extends Readable implements Writable {
   }
   
   public static read(): CrawlerConfig {
-    return new CrawlerConfig(super.read('config/crawler-config.json'));
+    return new CrawlerConfig(Readable.read('config/crawler-config.json'));
   }
   
   write(): void {
-    let {write, ...data} = this;
-    fs.writeFileSync('config/crawler-config.json', JSON.stringify(data, null, 2));
+    super.write('config/crawler-config.json');
   }
 }
 
-export class PageConfig extends Readable implements Writable {
+export class PageConfig extends Writable implements Readable {
   public port: number; 
   
   constructor(data:any) {
@@ -49,16 +55,15 @@ export class PageConfig extends Readable implements Writable {
   }
   
   public static read(): PageConfig {
-    return new PageConfig(super.read('config/page-config.json'));    
+    return new PageConfig(Readable.read('config/page-config.json'));    
   }
   
   write(): void {
-    let {write, ...data} = this;
-    fs.writeFileSync('config/page-config.json', JSON.stringify(data, null, 2));
+    super.write('config/page-config.json');
   }
 }
 
-export class PostgresConfig extends Readable implements Writable {
+export class PostgresConfig extends Writable implements Readable {
   public user: string;
   public password: string;
   public host: string;
@@ -78,12 +83,11 @@ export class PostgresConfig extends Readable implements Writable {
   }
   
   public static read(): PostgresConfig {
-    return new PostgresConfig(super.read('config/postgres-config.json'));
+    return new PostgresConfig(Readable.read('config/postgres-config.json'));
   }
   
   write(): void {
-    let {write, ...data} = this;
-    fs.writeFileSync('config/postgres-config.json', JSON.stringify(data, null, 2));
+    super.write('config/postgres-config.json');
   }
 }
 
