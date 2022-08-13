@@ -2,8 +2,6 @@ import * as cheerio from 'cheerio';
 import { Client, Host } from '../general/abstract_client.js';
 import { crawlerConfig as config } from '../general/config/config_singleton.js';
 import { ifDefined, toAbsolute } from '../general/utils.js';
-import { store } from './state/store.js';
-import * as targets from './state/targetsSlice.js';
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -24,14 +22,14 @@ const CONTENT_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li'];
  * @param source Response source
  * @param db DB client to save results by
  */
-export async function inspect(
+export function inspect(
   res: { data: Buffer, headers: { [key: string]: string } }, 
   source: string, db?: Client 
-): Promise<Host> {
+): { host:Host, links:string[] } {
   let $: cheerio.CheerioAPI;
   $ = load(res, source);
 
-  findLinks($, source);
+  let links = findLinks($, source);
   
   // TODO if source is IP addr, do reverse DNS
   
@@ -43,7 +41,7 @@ export async function inspect(
   }
 
   db?.push(host);
-  return host;
+  return { host, links };
 }
 
 function load(res: { data: Buffer, headers: { [key: string]: string } }, source: string) {
@@ -135,13 +133,11 @@ function getKeywords(headers: { [key: string]: string; }) {
   return keywords;
 }
 
-function findLinks($: cheerio.CheerioAPI, source: string) {
-  $('[href]').each((i, elem) => {
-    ifDefined(elem.attribs.href, val => {
-      val = toAbsolute(val, source);
-      store.dispatch(targets.push(val));
-    });
-  });
+function findLinks($: cheerio.CheerioAPI, source: string): string[] {
+  return $('[href]').get().reduce((prev, elem) => {
+    ifDefined(toAbsolute(elem.attribs.href, source))(prev.push);
+    return prev;
+  }, []);
 }
 
 function getTitle($: cheerio.CheerioAPI, source: string) {

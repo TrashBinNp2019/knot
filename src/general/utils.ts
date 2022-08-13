@@ -1,11 +1,12 @@
 /**
- * If arg is defined, call the callback with arg.
+ * If arg is defined call the callback with arg, but curried
  * @param arg Value to check
- * @param callback If defined called with arg
  */
-export function ifDefined<T>(arg: T | undefined, callback: (arg: T) => void) {
+export function ifDefined<T>(arg: T | undefined) {
   if (arg !== undefined) {
-    callback(arg);
+    return (callback: (arg: T) => void) => callback(arg);
+  } else {
+    return () => {};
   }
 }
 
@@ -65,9 +66,9 @@ export function toAbsolute(hl: string, base: string): string | undefined {
       break;
     case /^\//.test(hl):  
       const ind = base.search(/[^:\/]\//) + 1;
-      res = base.substring(0, !ind? length : ind) + hl;
+      res = base.substring(0, !ind? base.length : ind) + hl;
       break;
-    case /^?/.test(hl):
+    case /^\?/.test(hl):
       res = base.split('?')[0].split('#')[0] + hl;
       break;
     case !/[^:\/]\//.test(base):

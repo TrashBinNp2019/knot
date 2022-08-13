@@ -5,13 +5,13 @@ import { crawlerConfig as config } from '../general/config/config_singleton.js';
 import { store } from './state/store.js';
 import * as pausable from './state/pausableSlice.js';
 
-let targets: string[] = [];
-
 db.test().then((err) => {
   if (err) {
     console.log('- DB error:', err.message);
     process.exit(1);
   }
+
+  let en = engine.generate({ db });
 
   if (config.use_web_interface) {
     const server = iface.init();
@@ -19,7 +19,6 @@ db.test().then((err) => {
     engine.on('log', (...args: any[]) => {
       server.emit(iface.Events.log, ...args);
     });
-    // equivalent to targets.shift!
     engine.on('examined', (count: number) => {
       server.emit(iface.Events.examined, count);
     });
@@ -35,10 +34,10 @@ db.test().then((err) => {
       if (!store.getState().pausable.paused) {
         store.dispatch(pausable.pauseRequested({}));
       } else {
-        engine.start({ db });
+        en.next();
       }
     });
   }
 
-  engine.start({ db });
+  en.next({ db });
 });

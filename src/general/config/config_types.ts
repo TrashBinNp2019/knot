@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import { parseTime } from '../utils.js';
 
-// Interfaces don't work smh :/
 class Readable {
   public static read(path: string): Readable {
     ensureExists(path);

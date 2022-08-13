@@ -50,4 +50,5 @@ npm run page-dev
   - Redux
 - Add support for other media (images, etc.)
 - Efficiently compress pages
+- Optimise bandwidth usage by interfaces
 - Find something cool with this
