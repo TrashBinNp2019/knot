@@ -78,8 +78,8 @@ export async function* generate(options: StartOptions) {
   } else {
     log('Starting');
   }
-  
-  while (repetitions !== 0 && !store.getState().pausable.pausePending) {
+
+  while (repetitions-- !== 0 && !store.getState().pausable.pausePending) {
     if (targets.length < config.targets_cap) {
       if (config.generate_random_targets) {
         targets = generateIps(config.targets_cap - targets.length);
@@ -89,9 +89,9 @@ export async function* generate(options: StartOptions) {
       }
     }
     
+    let amount = targets.length;
     targets = await crawl(targets, db) || [];
-    examined(targets.length);
-    repetitions--;
+    examined(amount);
         
     if (store.getState().pausable.pausePending) {
       log('Paused');

@@ -4,7 +4,7 @@
  */
 export function ifDefined<T>(arg: T | undefined) {
   if (arg !== undefined) {
-    return (callback: (arg: T) => void) => callback(arg);
+    return (callback: (arg: T) => void) => { callback(arg) };
   } else {
     return () => {};
   }

@@ -30,9 +30,9 @@ export class CrawlerConfig extends Writable implements Readable {
   
   constructor(data: any) {
     super();
-
+    
     let to = parseTime(data.request_timeout);
-    if (to === undefined) {
+    if (to === undefined && data.request_timeout !== undefined) {
       console.log('Invalid request_timeout');
     }
 

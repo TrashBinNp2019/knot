@@ -6,6 +6,7 @@ import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
 const CONTENT_TAGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li'];
+const EMPTY_THRESHOLD = 15;
 
 /**
  * Inspect the response and extract title, contents and futher possible targets
@@ -97,8 +98,15 @@ function executeJS(data: Buffer) {
   return $;
 }
 
-function isEmpty($: cheerio.CheerioAPI) {
-  return $('body').text().length === 0;
+function isEmpty($: cheerio.CheerioAPI): boolean {
+  let count = EMPTY_THRESHOLD;
+
+  return CONTENT_TAGS.find((tag) => {
+    return $(tag).get().find(elem => {
+      count -= $(elem).text()?.length ?? 0;
+      return count < 0;
+    }, 0) !== undefined;
+  }) === undefined;
 }
 
 function getMetas($: cheerio.CheerioAPI) {
@@ -135,7 +143,9 @@ function getKeywords(headers: { [key: string]: string; }) {
 
 function findLinks($: cheerio.CheerioAPI, source: string): string[] {
   return $('[href]').get().reduce((prev, elem) => {
-    ifDefined(toAbsolute(elem.attribs.href, source))(prev.push);
+    ifDefined(toAbsolute($(elem).attr('href'), source))((arg) => {
+      prev.push(arg);
+    });
     return prev;
   }, []);
 }
