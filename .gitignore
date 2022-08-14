@@ -1,4 +1,4 @@
 node_modules
 build
 config/*-config.json
-tests/static/check.html
+test/static/check.html
