@@ -37,7 +37,7 @@ export function inspect(
   const host: Host = {
     title: getTitle($, source),
     addr: source,
-    contents: getContents($, res),
+    contents: getContents($),
     keywords: getKeywords(res.headers),
   }
 
@@ -45,7 +45,7 @@ export function inspect(
   return { host, links };
 }
 
-function load(res: { data: Buffer, headers: { [key: string]: string } }, source: string) {
+export function load(res: { data: Buffer, headers: { [key: string]: string } }, source: string) {
   let $ = cheerio.load(res.data);
 
   if (isEmpty($) && config.unsafe) {
@@ -53,7 +53,7 @@ function load(res: { data: Buffer, headers: { [key: string]: string } }, source:
   }
   
   if (res.headers['content-type'] !== undefined && !res.headers['content-type'].includes('text/html')) {
-    throw new Error('Unknown content type ' + res.headers['content-type']);
+    throw new Error('Unknown content type: ' + res.headers['content-type']);
   }
   
   if (source.length > 120) {
@@ -63,7 +63,7 @@ function load(res: { data: Buffer, headers: { [key: string]: string } }, source:
   return $;
 }
 
-function getContents($: cheerio.CheerioAPI, res: { data: Buffer; headers: { [key: string]: string; }; }): string {
+export function getContents($: cheerio.CheerioAPI): string {
   let contents = '';
   
   CONTENT_TAGS.forEach((tag) => {
@@ -80,7 +80,7 @@ function getContents($: cheerio.CheerioAPI, res: { data: Buffer; headers: { [key
   if (contents.length > 65534) {
     contents = contents.substring(0, 65534);
   }
-  contents = contents.substring(0, contents.lastIndexOf(' '));
+  contents = contents.substring(0, contents.lastIndexOf(' ') === -1 ? contents.length : contents.lastIndexOf(' '));
 
   return contents;
 }
@@ -98,12 +98,12 @@ function executeJS(data: Buffer) {
   return $;
 }
 
-function isEmpty($: cheerio.CheerioAPI): boolean {
+export function isEmpty($: cheerio.CheerioAPI): boolean {
   let count = EMPTY_THRESHOLD;
 
   return CONTENT_TAGS.find((tag) => {
     return $(tag).get().find(elem => {
-      count -= $(elem).text()?.length ?? 0;
+      count -= $(elem).text().length;
       return count < 0;
     }, 0) !== undefined;
   }) === undefined;
@@ -115,17 +115,17 @@ function getMetas($: cheerio.CheerioAPI) {
   extras += $('meta[name="keywords"]').attr('content') ?? '';
   extras += $('meta[name="author"]').attr('content') ?? '';
   let post = extras.length;
-  if (post > pre) {
+  // if (post > pre) {
     // log(`${post - pre} symbols gathered from plain meta tags`);
-  }
+  // }
   pre = post;
   extras += $('meta[property="og:site_name"] ').attr('content') ?? '';
   extras += $('meta[property="og:type"] ').attr('content') ?? '';
   extras += $('meta[property="og:title"] ').attr('content') ?? '';
   post = extras.length;
-  if (post > pre) {
+  // if (post > pre) {
     // log(`${post - pre} symbols gathered from Open Graph meta tags`);
-  }
+  // }
   return extras;
 }
 
@@ -143,14 +143,14 @@ function getKeywords(headers: { [key: string]: string; }) {
 
 function findLinks($: cheerio.CheerioAPI, source: string): string[] {
   return $('[href]').get().reduce((prev, elem) => {
-    ifDefined(toAbsolute($(elem).attr('href'), source))((arg) => {
+    ifDefined(arg => {
       prev.push(arg);
-    });
+    })(toAbsolute($(elem).attr('href'), source));
     return prev;
   }, []);
 }
 
-function getTitle($: cheerio.CheerioAPI, source: string) {
+export function getTitle($: cheerio.CheerioAPI, source: string) {
   let title = $('title').text();
 
   let index = 1;
@@ -159,7 +159,7 @@ function getTitle($: cheerio.CheerioAPI, source: string) {
     index++;
   }
   if (!title) {
-    title = $('meta[name="title"]').attr('content') ?? source ?? 'unknown';
+    title = $('meta[name="title"]').attr('content') ?? source;
   }
 
   if (title.split(' ').length > 5) {

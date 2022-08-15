@@ -1,5 +1,5 @@
 import * as toolkitRaw from '@reduxjs/toolkit';
-const { configureStore } = ((toolkitRaw as any).default ?? toolkitRaw) as typeof toolkitRaw;
+const { configureStore } = ((toolkitRaw as any).default) as typeof toolkitRaw;
 import pausableReducer from './pausableSlice.js';
 import generalStatsReducer from './generalStatsSlice.js';
 

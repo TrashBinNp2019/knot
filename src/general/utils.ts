@@ -1,13 +1,14 @@
 /**
  * If arg is defined call the callback with arg, but curried
- * @param arg Value to check
  */
-export function ifDefined<T>(arg: T | undefined) {
-  if (arg !== undefined) {
-    return (callback: (arg: T) => void) => { callback(arg) };
-  } else {
-    return () => {};
-  }
+export function ifDefined<T>(callback: (arg: T) => any) {
+  return (arg: T | undefined) => { 
+    if (arg !== undefined) {
+      return callback(arg) 
+    }
+
+    return undefined;
+  };
 }
 
 /**
@@ -29,7 +30,8 @@ export function parseTime(val: any): number | undefined {
   return undefined;
 }
 
-function parseTimeString(val: string): number | undefined {
+// TODO add suport for "1m 30s"
+export function parseTimeString(val: string): number | undefined {
   let match = val.match(/^(\d+)(ms|[mshd])$/);
   
   if (match) {
@@ -70,6 +72,9 @@ export function toAbsolute(hl: string, base: string): string | undefined {
       break;
     case /^\?/.test(hl):
       res = base.split('?')[0].split('#')[0] + hl;
+      if (!/[^:\/]\//.test(res)) {
+        res = res.replace(/([^\/])\?/, '$1/?');
+      }
       break;
     case !/[^:\/]\//.test(base):
       res = base + '/' + hl;
@@ -93,13 +98,19 @@ export function generateIps(count: number): string[] {
 }
 
 // TODO improve this to 1) ignore small differences and 2) use a rolling average
-export function calculatePerMinute(prev: number, prevRate: number, count: number) {
-  const curr = Number(new Date());
-  let diff = Math.max(curr - prev, 10);
-  // console.log(prevRate, diff, count / diff * 1000 * 60, (prevRate * 100 + (count / (diff / 1000 / 60))) / 101);
-  if (prevRate === 0) {
-    return count / diff * 1000 * 60;
-  } else {
-    return (prevRate * 10 + (count / (diff / 1000 / 60))) / 11;
+export function calculatePerMinute(diff: number, count: number) {
+  let rate = count / Math.max(diff, 10) * 1000 * 60;
+  return { 
+    rate,
+    update: (diff:number, count:number) => updatePerMinute(diff, rate, count),
+  }
+}
+
+export function updatePerMinute(timeDiff: number, prevRate: number, count: number) {
+  let diff = Math.max(timeDiff, 10);
+  let rate = prevRate? (prevRate * 4 + (count / (diff / 1000 / 60))) / 5 : count / diff * 1000 * 60;
+  return {
+    rate,
+    update: (diff: number, count: number) => updatePerMinute(diff, rate, count),
   }
 }
