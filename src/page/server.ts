@@ -6,7 +6,7 @@ import helmet from 'helmet';
 import { pageConfig as config } from '../general/config/config_singleton.js';
 
 const app = express();
-const port = config.port;
+const port = config().port;
 
 if (process.env.NODE_ENV !== 'dev') {
   app.use(helmet({

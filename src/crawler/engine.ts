@@ -19,7 +19,7 @@ export function clearListeners() {
 clearListeners();
 
 function log(...args: any[]) {
-  if (config.log_to_console) { 
+  if (config().log_to_console) { 
     console.log('-', ...args);
   }
   listeners.get(Events.log).forEach(callback => callback(...args));
@@ -80,9 +80,9 @@ export async function* generate(options: StartOptions) {
   }
 
   while (repetitions-- !== 0 && !store.getState().pausable.pausePending) {
-    if (targets.length < config.targets_cap) {
-      if (config.generate_random_targets) {
-        targets = generateIps(config.targets_cap - targets.length);
+    if (targets.length < config().targets_cap) {
+      if (config().generate_random_targets) {
+        targets = generateIps(config().targets_cap - targets.length);
       } else if (targets.length === 0) {
         log('No targets detected');
         break;
@@ -112,7 +112,7 @@ export async function* generate(options: StartOptions) {
 export async function crawl(targets: string[], db?: Client): Promise<string[]> {
   try {
     return handleResults((await Promise.allSettled(validate(targets).map(async target => ({ 
-      res: await axios.get(target, { timeout: config.request_timeout }), 
+      res: await axios.get(target, { timeout: config().request_timeout }), 
       target,
     })))), db);
   } catch (e) {

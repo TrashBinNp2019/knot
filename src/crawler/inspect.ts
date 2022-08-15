@@ -48,7 +48,7 @@ export function inspect(
 export function load(res: { data: Buffer, headers: { [key: string]: string } }, source: string) {
   let $ = cheerio.load(res.data);
 
-  if (isEmpty($) && config.unsafe) {
+  if (isEmpty($) && config().unsafe) {
     $ = executeJS(res.data);
   }
   

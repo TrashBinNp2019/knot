@@ -11,8 +11,8 @@
     "page-dev": "set NODE_ENV=dev&& ts-node-esm src/page/server.ts",
     "build": "node src/build-tools/pre.js && echo Running tsc... & tsc && babel --presets @babel/preset-react src/page/static -d build/page/static & babel src/crawler/static -d build/crawler/static & babel src/general -d build/general & babel src/general -d build/general/public && node src/build-tools/post.js",
     "test": "npm run test-src && npm run test-build",
-    "test-build": "mocha test/build.ts",
-    "test-src": "set NODE_ENV=dev&& mocha test/src.ts"
+    "test-build": "mocha test/build/build.ts",
+    "test-src": "c8 tap test/src/"
   },
   "author": "",
   "license": "ISC",
@@ -27,10 +27,14 @@
     "@types/mocha": "^9.1.1",
     "@types/node": "^18.6.0",
     "@types/pg": "^8.6.5",
+    "@types/tap": "^15.0.7",
+    "c8": "^7.12.0",
     "chai": "^4.3.6",
+    "esmock": "^1.9.3",
     "fs-cheerio": "^3.0.0",
     "mocha": "^10.0.0",
     "ncp": "^2.0.0",
+    "tap": "^16.3.0",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.8.1",
     "typescript": "^4.7.4"
@@ -46,5 +50,13 @@
     "redux": "^4.2.0",
     "redux-act": "^1.8.0",
     "socket.io": "^4.5.1"
+  },
+  "tap": {
+    "node-arg" : [
+      "--loader=ts-node/esm",
+      "--loader=esmock"
+    ],
+    "coverage": false,
+    "ts": false
   }
 }

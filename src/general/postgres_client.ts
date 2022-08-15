@@ -5,7 +5,7 @@ import { postgresConfig as config } from './config/config_singleton.js';
 import * as prep from './prep-string.js';
 const { Pool } = pg;
 
-const pool = new Pool(config.writeExcluded());
+const pool = new Pool(config().writeExcluded());
 
 export async function test() {
   try {

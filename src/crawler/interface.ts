@@ -28,13 +28,13 @@ class ServerWrapper {
   private onNewConnection(socket: Socket): void {
     socket.emit(Events.examined, store.getState().general.examined_total, store.getState().general.examined_pm);
     socket.emit(Events.valid, store.getState().general.valid_total);
-    socket.emit(Events.cap, config.targets_cap);
+    socket.emit(Events.cap, config().targets_cap);
     socket.emit(Events.pause, store.getState().pausable.paused);
     
     socket.on('cap', (count) => {
-      count = parseInt(count, 10) || config.targets_cap;
-      config.targets_cap = count > 50000 ? 50000 : count;
-      this.io.emit(Events.cap, config.targets_cap);
+      count = parseInt(count, 10) || config().targets_cap;
+      config().targets_cap = count > 50000 ? 50000 : count;
+      this.io.emit(Events.cap, config().targets_cap);
     });
     
     socket.on('pause', () => {
@@ -51,14 +51,14 @@ class ServerWrapper {
   }
   
   emit(event: string, ...args: any[]): void {
-    let arg: any = args[0];
+    let arg: any = args.slice(0, 1);
     
     switch (event) {
       case Events.examined:
         arg = [store.getState().general.examined_total, store.getState().general.examined_pm];
         break;
       case Events.log: 
-        arg = reduce(args);
+        arg = [reduce(args)];
       case Events.valid:
       case Events.cap:
       case Events.pause:
@@ -91,7 +91,7 @@ function startHttpServer() {
   app.use('/scripts', express.static(process.env.NODE_ENV === 'dev' ? 'src/general' : 'build/general/public'));
   
   const httpServer = createServer(app);
-  httpServer.listen(config.web_interface_port);
+  httpServer.listen(config().web_interface_port);
   return httpServer;
 }
 

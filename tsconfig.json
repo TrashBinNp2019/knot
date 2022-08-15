@@ -1,9 +1,10 @@
 {
     "compilerOptions": {
-        "module": "ESNext",
+        "module": "ESnext",
+        "target": "ESnext",
         "moduleResolution": "node",
         "outDir": "build/",
         "allowSyntheticDefaultImports": true,
     },
-    "include": ["src/**/*.ts"],
+    "include": ["src/**/*.ts", "src/build-tools/configure.js"],
 }

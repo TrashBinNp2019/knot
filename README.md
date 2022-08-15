@@ -48,6 +48,7 @@ npm run page-dev
 - Reach and retain 100% coverage
 - Integrate more well-developed libraries for code quality:
   - Redux
+  - Prisma
 - Add support for other media (images, etc.)
 - Efficiently compress pages
 - Optimise bandwidth usage by interfaces

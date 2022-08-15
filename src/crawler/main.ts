@@ -13,7 +13,7 @@ db.test().then((err) => {
 
   let en = engine.generate({ db });
 
-  if (config.use_web_interface) {
+  if (config().use_web_interface) {
     const server = iface.init();
 
     engine.on('log', (...args: any[]) => {

@@ -1,4 +1,7 @@
 node_modules
-build
+/build
 config/*-config.json
-test/static/check.html
+test/src/crawler/static/check.html
+test/src.ts
+coverage
+.nyc_output
