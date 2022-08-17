@@ -24,6 +24,7 @@ $(document).ready(function() {
   socket.on('log', function(data) {
     log_count++;
     let obj = {};
+    data = data.slice(data.indexOf(';') + 1, data.length);
     if (data.startsWith('{')) {
       obj = JSON.parse(data);
       obj.title = forHtml(obj.title);

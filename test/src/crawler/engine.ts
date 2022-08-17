@@ -13,11 +13,46 @@ const engine = await esmock(
         targets_cap: 5,
         request_timeout: 200,
         log_to_console: false,
-        generate_random_targets: false,
+        generate_random_targets: gen_rand_tgts,
       })
+    },
+    '../../../src/crawler/state/store.ts': {
+      store: {
+        dispatch: (action) => {
+          if (debug) console.log(action);
+          if (action.type.includes('log')) {
+            logs.push(JSON.stringify(action.payload));
+          } else if (action.type.includes('examined')) {
+            total_examined += action.payload.count;
+          } else if (action.type.includes('valid')) {
+            total_valid += action.payload.count;
+          } else if (action.type.includes('paused')) {
+            pause_req = false;
+          }
+        },
+        getState: () => ({
+          pausable: {
+            pausePending: pause_req,
+          }
+        }),
+      }
     }
   }
 );
+
+let debug = false;
+let logs:string[] = [];
+let total_examined = 0;
+let total_valid = 0;
+let pause_req = false;
+tap.beforeEach(() => {
+  logs = [];
+  total_examined = 0;
+  total_valid = 0;
+  pause_req = false;
+})
+
+let gen_rand_tgts = false;
 
 const index = fs.readFileSync('test/src/crawler/static/index.html');
 let $: cheerio.CheerioAPI;
@@ -28,9 +63,9 @@ reset()
 
 let app = express();
 const port = Math.trunc(Math.random() * 100 + 60500);
-let onRequest: (req:express.Request) => void;
+let onRequest: (req:express.Request, res:express.Response) => void;
 app.get(/./, (req, res) => {
-  onRequest(req);
+  onRequest(req, res);
   if (req.url === '/subdir/page.html') {
     res.status(200).end($.html());
   } else {
@@ -48,6 +83,8 @@ tap.test('Engine should send valid requests', async t => {
     received = true;
   }
   await engine.crawl([addr]);
+  tap.match(logs[logs.length - 1], '"title":"Title"', 'should send correct logs');
+  tap.equal(total_valid, 1, 'should send correct valid count');
   tap.ok(received, 'express received request');
 });
 
@@ -68,6 +105,7 @@ tap.test('Engine should crawl a page correctly', async t => {
     '/subdir/page.html?q=1',
   ]);
   
+  tap.equal(total_examined, 5, 'should send correct examined count');
   onRequest = (req) => {};
 });
 
@@ -88,5 +126,89 @@ tap.test('Bot should inspect visited pages correctly', async t => {
     db: validator, repetitions: 2, generate_random_targets: false 
   }).next();
   
+  tap.equal(total_valid, 1, 'should send correct valid count');
   t.same(inspected, [ addr ]);
+});
+
+tap.test('Repetitions', async t => {
+  reset();
+  await engine.generate({ 
+    targets: [addr],
+    repetitions: 1,
+  }).next();
+
+  tap.equal(total_examined, 1);
+  t.ok(logs.find(l => /finished/i.test(l)));
+});
+
+tap.test('Pausability', async t => {
+  gen_rand_tgts = true;
+
+  let en = engine.generate({ 
+    targets: [],
+  });
+  setTimeout(() => {
+    pause_req = true;
+  }, 100);
+  await en.next();
+
+  t.equal(total_examined, 5);
+  t.ok(logs.find(l => /paused/i.test(l)));
+
+  logs = [];
+  setTimeout(() => {
+    pause_req = true;
+  }, 100);
+  await en.next();
+  t.equal(total_examined, 10);
+  t.ok(logs.find(l => /resuming/i.test(l)));
+  t.ok(logs.find(l => /paused/i.test(l)));
+
+  logs = [];
+  setTimeout(() => {
+    pause_req = true;
+  }, 100);
+  await en.next();
+  t.equal(total_examined, 15);
+  t.ok(logs.find(l => /resuming/i.test(l)));
+  t.ok(logs.find(l => /paused/i.test(l)));
+
+  gen_rand_tgts = false;
+});
+
+tap.test('Empty targets list', async t => {
+  await engine.generate({ targets: [] }).next();
+  t.ok(logs.find(l => /no targets/i.test(l)), 'logs should contain a "no targets" message');
+});
+
+tap.test('Random targets generation', async t => {
+  gen_rand_tgts = true;
+
+  await engine.generate({ 
+    repetitions: 2,
+  }).next();
+  t.equal(total_examined, 10);
+
+  gen_rand_tgts = false;
+});
+
+tap.test('Should drop targets if cap is exceeded', async t => {
+  await engine.generate({ 
+    targets: ['', '', '', '', '', ''], 
+  }).next();
+  t.equal(total_examined, 0);
+  t.ok(logs.find(l => /cap exceeded/i.test(l)), 'logs should contain a "cap exceeded" message');
+});
+
+tap.test('Error handling', async t => {
+  onRequest = (req, res) => {
+    res.set('Content-Type', 'none');
+  }
+
+  await engine.generate({
+    targets: [addr],
+  }).next();
+  t.ok(logs.find(l => /none/i.test(l)), 'logs should contain a error message referencing unrecognized content type');
+
+  onRequest = () => {};
 });

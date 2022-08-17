@@ -49,6 +49,24 @@ export function parseTimeString(val: string): number | undefined {
 }
 
 /**
+ * Reduces args to a string via JSON.stringify. 
+ * If the only arg is an object, it will be stringified with tabulation.
+ * @param args Objects to convert
+ * @returns String representation of args
+ */
+export function reduce(...args: any): string {
+  if (args.length > 1) {
+    return args.reduce((acc, arg) => {
+      return '' +
+        (typeof acc === 'string' ? acc : JSON.stringify(acc)) + ' ' +
+        (typeof arg === 'string' ? arg : JSON.stringify(arg));
+    });
+  } else {
+    return typeof args[0] === 'string' ? args[0] : JSON.stringify(args[0], null, 2);
+  }
+}
+
+/**
  * Resolves hyperlink relative to the base url. Ignores #.
  * @example resolve('/foo/bar', 'http://example.com') => 'http://example.com/foo/bar'
  * @param hl Hyperlink to resolve
@@ -113,4 +131,14 @@ export function updatePerMinute(timeDiff: number, prevRate: number, count: numbe
     rate,
     update: (diff: number, count: number) => updatePerMinute(diff, rate, count),
   }
+}
+
+export function stringifyLogs(time:number, ...args: any): string {
+  return time + ';' + reduce(...args);
+}
+
+export function parseLogs(log: string): { time:number, msg:string } {
+  const [ time, ...rest ] = log.split(';');
+  let msg = rest.join(';');
+  return { time: Number(time), msg };
 }

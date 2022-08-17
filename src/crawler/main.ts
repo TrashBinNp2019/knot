@@ -3,7 +3,22 @@ import * as engine from './engine.js';
 import * as iface from './interface.js';
 import { crawlerConfig as config } from '../general/config/config_singleton.js';
 import { store } from './state/store.js';
-import * as pausable from './state/pausableSlice.js';
+import { parseLogs } from '../general/utils.js';
+
+let eng:AsyncGenerator;
+
+let prevState = store.getState();
+store.subscribe(() => {
+  const state = store.getState();
+  if (state.general.message !== prevState.general.message && config().log_to_console) {
+    console.log('-', parseLogs(state.general.message).msg);
+  }
+  if (state.pausable.resumePending && !prevState.pausable.resumePending) {
+    eng.next();
+  }
+
+  prevState = store.getState();
+});
 
 db.test().then((err) => {
   if (err) {
@@ -11,33 +26,11 @@ db.test().then((err) => {
     process.exit(1);
   }
 
-  let en = engine.generate({ db });
+  eng = engine.generate({ db });
 
   if (config().use_web_interface) {
-    const server = iface.init();
-
-    engine.on('log', (...args: any[]) => {
-      server.emit(iface.Events.log, ...args);
-    });
-    engine.on('examined', (count: number) => {
-      server.emit(iface.Events.examined, count);
-    });
-    engine.on('valid', (count) => {
-      
-      server.emit(iface.Events.valid, count);
-    });
-    engine.on('pause', () => {
-      server.emit(iface.Events.pause);
-    });
-
-    server.on('pause', () => {
-      if (!store.getState().pausable.paused) {
-        store.dispatch(pausable.pauseRequested({}));
-      } else {
-        en.next();
-      }
-    });
+    iface.init();
   }
 
-  en.next({ db });
+  eng.next();
 });

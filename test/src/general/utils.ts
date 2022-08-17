@@ -78,3 +78,18 @@ tap.test('calculatePerMinute', async t => {
   update = utils.calculatePerMinute(1, 0).update;
   t.equal(update(100, 1).rate, 600, 'update should overwrite zero'); 
 });
+
+tap.test('reduce', async t => {
+  t.equal(utils.reduce('hi'), 'hi');
+  t.equal(utils.reduce(1, 'hi'), '1 hi');
+  t.equal(utils.reduce('hi', { test: 'test' }), 'hi {"test":"test"}');
+  t.equal(utils.reduce({ test: undefined }, 1), '{} 1');
+  t.equal(utils.reduce({ test: null }, 1), '{"test":null} 1');
+  t.equal(utils.reduce({ test: () => {} }, 1), '{} 1');
+});
+
+tap.test('stringify/parse logs', async t => {
+  t.equal(utils.stringifyLogs(1111, { test: 'test' }), `1111;{\n  "test": "test"\n}`);
+  t.match(utils.parseLogs('1111;test'), { time: 1111, msg: 'test' });
+  t.match(utils.parseLogs('1111;test;test'), { time: 1111, msg: 'test;test' });
+});
