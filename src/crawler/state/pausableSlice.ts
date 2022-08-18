@@ -1,5 +1,5 @@
 import * as toolkitRaw from '@reduxjs/toolkit';
-const { createSlice } = ((toolkitRaw as any).default ?? toolkitRaw) as typeof toolkitRaw;
+const { createSlice } = (toolkitRaw as any).default as typeof toolkitRaw;
 
 const pausableSlice = createSlice({
   name: 'pausable',
@@ -22,14 +22,18 @@ const pausableSlice = createSlice({
       state.pausePending = false;
     },
     paused(state, action) {
-      state.paused = true;
-      state.pausePending = false;
-      state.resumePending = false;
+      if (!state.paused) {
+        state.paused = true;
+        state.pausePending = false;
+        state.resumePending = false;
+      }
     },
     resumed(state, action) {
-      state.paused = false;
-      state.pausePending = false;
-      state.resumePending = false;
+      if (state.paused) {
+        state.paused = false;
+        state.pausePending = false;
+        state.resumePending = false;
+      }
     },
   }
 })
