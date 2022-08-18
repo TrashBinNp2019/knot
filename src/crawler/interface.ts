@@ -2,10 +2,8 @@ import express from "express";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { crawlerConfig as config } from "../general/config/config_singleton.js";
-import { reduce } from '../general/utils.js';
 import { store } from "./state/store.js";
 import * as pausable from "./state/pausableSlice.js";
-import * as general from "./state/generalStatsSlice.js";
 
 export const Events = {
   log: 'log', 
@@ -23,22 +21,24 @@ class ServerWrapper {
     
     store.subscribe(() => {
       const state = store.getState();
+      let args: [string, ...any];
       
       switch (true) {
         case (state.general.message !== this.prevState.general.message) :
-          io.emit(Events.log, state.general.message);
+          args = [Events.log, state.general.message];
           break;
         case (state.general.examined_total !== this.prevState.general.examined_total) :
-          io.emit(Events.examined, state.general.examined_total, state.general.examined_pm);
+          args = [Events.examined, state.general.examined_total, state.general.examined_pm];
           break;
         case (state.general.valid_total !== this.prevState.general.valid_total) :
-          io.emit(Events.valid, state.general.valid_total);
+          args = [Events.valid, state.general.valid_total];
           break;
         case (state.pausable.paused !== this.prevState.pausable.paused) :
-          io.emit(Events.pause, state.pausable.paused);
+          args = [Events.pause, state.pausable.paused];
           break;
       }
       
+      io.emit(...args);
       this.prevState = state;
     });
     
@@ -66,7 +66,6 @@ class ServerWrapper {
 }
 
 export function init() {
-  
   return new ServerWrapper(new Server(startExpress()));
 }
 
@@ -78,5 +77,6 @@ function startExpress() {
   
   const httpServer = createServer(app);
   httpServer.listen(config().web_interface_port);
+  httpServer.unref();
   return httpServer;
 }

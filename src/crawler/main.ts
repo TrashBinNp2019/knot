@@ -26,7 +26,9 @@ db.test().then((err) => {
     process.exit(1);
   }
 
-  eng = engine.generate({ db });
+  eng = engine.generate({ 
+    db,
+  });
 
   if (config().use_web_interface) {
     iface.init();

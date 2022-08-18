@@ -141,6 +141,26 @@ tap.test('Repetitions', async t => {
   t.ok(logs.find(l => /finished/i.test(l)));
 });
 
+tap.test('Run for', async t => {
+  reset();
+  $('#google').remove();
+
+  await engine.generate({
+    targets: [addr],
+    run_for: '1ms',
+  }).next();
+
+  tap.equal(total_examined, 1, 'should terminate after scanning single target');
+  t.ok(logs.find(l => /finished/i.test(l)));
+
+  await engine.generate({
+    targets: [addr],
+    run_for: '10h',
+  }).next();
+
+  tap.equal(total_examined, 5, 'should terminate after scanning all targets despite 10 hours remaining');
+});
+
 tap.test('Pausability', async t => {
   gen_rand_tgts = true;
 
@@ -181,7 +201,7 @@ tap.test('Empty targets list', async t => {
   t.ok(logs.find(l => /no targets/i.test(l)), 'logs should contain a "no targets" message');
 });
 
-tap.test('Random targets generation', async t => {
+tap.test('Random target generation', async t => {
   gen_rand_tgts = true;
 
   await engine.generate({ 

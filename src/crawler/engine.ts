@@ -1,12 +1,11 @@
 import { AxiosResponse, default as axios } from 'axios';
 import { Client } from '../general/abstract_client.js';
-import { Events } from './interface.js';
 import { crawlerConfig as config } from '../general/config/config_singleton.js';
 import { inspect } from './inspect.js';
 import { store } from './state/store.js';
 import * as pausable from './state/pausableSlice.js';
 import * as general from './state/generalStatsSlice.js';
-import { generateIps } from '../general/utils.js';
+import { generateIps, parseTime } from '../general/utils.js';
 
 function log(...args: any[]) {
   store.dispatch(general.log(args));
@@ -47,14 +46,18 @@ export async function* generate(options: StartOptions) {
   let db = options.db;
   let repetitions = options.repetitions ?? -1;
   let targets = options.targets ?? [];
-  // TODO implement
-  let run_for = options.run_for ?? -1;
+  let run_until: number;
+  let break_after: boolean;
+  if (options.run_for !== undefined) {
+    run_until = Date.now() + parseTime(options.run_for);
+    break_after = true;
+  }
   
   log('Starting');
 
-  while (repetitions-- !== 0) {
+  while (repetitions-- !== 0 && !(break_after && Date.now() > run_until)) {
     if (targets.length > config().targets_cap) {
-      log('Targets cap exceeded - dropping');
+      log('Target cap exceeded - dropping');
       targets = [];
     }
 
