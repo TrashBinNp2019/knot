@@ -44,7 +44,7 @@ npm run page-dev
 
 # Roadmap
 
-- Reach and retain 100% coverage
+- Reach and retain 100% coverage on engine code
 - Integrate more well-developed libraries for code quality:
   - ~~Redux~~
   - Prisma

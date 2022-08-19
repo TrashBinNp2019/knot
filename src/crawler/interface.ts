@@ -69,7 +69,7 @@ export function init() {
   return new ServerWrapper(new Server(startExpress()));
 }
 
-function startExpress() {
+export function startExpress() {
   const app = express();
   
   app.use(express.static((process.env.NODE_ENV === 'dev' ? 'src' : 'build') + '/crawler/static'));

@@ -1,5 +1,4 @@
 import pg from 'pg';
-import * as fs from 'fs';
 import { Host } from './abstract_client.js';
 import { postgresConfig as config } from './config/config_singleton.js';
 import * as prep from './prep-string.js';

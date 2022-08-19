@@ -1,14 +1,16 @@
 import * as fs from 'fs';
 import { parseTime } from '../utils.js';
+import { store } from '../../crawler/state/store.js';
+import { log } from '../../crawler/state/generalStatsSlice.js';
 
-class Readable {
+export class Readable {
   public static read(path: string): Readable {
     ensureExists(path);
     return ensureValid(fs.readFileSync(path, 'utf8'));
   };
 }
 
-class Writable {
+export class Writable {
   write(path: string) {
     fs.writeFileSync(path, JSON.stringify(this.writeExcluded(), null, 2));
   }
@@ -33,7 +35,7 @@ export class CrawlerConfig extends Writable implements Readable {
     
     let to = parseTime(data.request_timeout);
     if (to === undefined && data.request_timeout !== undefined) {
-      console.log('Invalid request_timeout');
+      store.dispatch(log(['Invalid request_timeout']));
     }
 
     this.request_timeout = to ?? 5000;
@@ -86,7 +88,7 @@ export class PostgresConfig extends Writable implements Readable {
     this.user = data.user;
     this.password = data.password;
     this.host = data.host ?? 'localhost';
-    this.port = parseInt(data.port, 10) ?? 5432;
+    this.port = parseInt(data.port, 10) || 5432;
     this.database = data.database;
   }
   
@@ -99,35 +101,35 @@ export class PostgresConfig extends Writable implements Readable {
   }
 }
 
-function ensureExists(path: string) {
+export function ensureExists(path: string) {
   if (!fs.existsSync(path)) {
     fs.writeFileSync(path, '{\n}');
   }
 }
 
-function ensureValid(data: string) {
+export function ensureValid(data: string) {
   try {
     return JSON.parse(data);
   } catch(e) {
-    console.log('- Config error: ', e.message);
+    store.dispatch(log(['Config error: ', e.message]));
     return {};
   }
 }
 
-function allDefined(obj: any, keys: string[]) {
+export function allDefined(obj: any, keys: string[]) {
   for (let key of keys) {
     if (obj[key] === undefined) {
-      console.log(`- ${key} undefined!`);
+      store.dispatch(log(`${key} undefined!`));
       return false;
     }
   }
   return true;
 }
 
-function allStrings(obj: any, keys: string[]) {
+export function allStrings(obj: any, keys: string[]) {
   for (let key of keys) {
     if (typeof obj[key] !== 'string') {
-      console.log(`- ${key} not a string!`);
+      store.dispatch(log(`${key} isn't a string!`));
       return false;
     }
   }

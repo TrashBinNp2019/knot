@@ -98,11 +98,11 @@ tap.test('Engine should crawl a page correctly', async t => {
     targets: [`localhost:${port}/subdir/page.html`], 
     repetitions: 2
   }).next()
-  t.same(visited, [
+  t.same(visited.sort(), [
     '/subdir/page.html',
-    '/subdir2',
-    '/subdir/page2.html',
     '/subdir/page.html?q=1',
+    '/subdir/page2.html',
+    '/subdir2',
   ]);
   
   tap.equal(total_examined, 5, 'should send correct examined count');
