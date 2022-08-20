@@ -12,7 +12,7 @@ export async function test() {
     return undefined;
   } catch (err) {
     if (err.code === '42P01') {
-      createTable();
+      return createTable();
     } else {
       return err;
     }
@@ -34,7 +34,6 @@ export function push(host: Host) {
       '${host.addr}', 
       '${host.contents}', 
       '${host.keywords}')`, 
-    (err, res) => { if (err) throw err; }
   );
 }
     
@@ -43,16 +42,21 @@ export async function get() {
 }
     
 export async function search(q: string) {
-  let query = `SELECT title, addr, contents, keywords FROM hosts WHERE title iLIKE $1 OR contents LIKE $1`;
+  let query = `SELECT title, addr, contents, keywords FROM hosts WHERE title iLIKE $1 OR contents iLIKE $1`;
   return (await pool.query(query, ['% ' + prep.forSql(q) + ' %'])).rows;
 }
     
 async function createTable() {
-  await pool.query(`CREATE TABLE hosts (
-    title VARCHAR(128) NOT NULL,
-    addr VARCHAR(128) NOT NULL,
-    contents TEXT NOT NULL,
-    keywords VARCHAR(256) NOT NULL,
-    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )`);
+  try {
+    await pool.query(`CREATE TABLE hosts (
+      title VARCHAR(128) NOT NULL,
+      addr VARCHAR(128) NOT NULL,
+      contents TEXT NOT NULL,
+      keywords VARCHAR(256) NOT NULL,
+      timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`);
+    return undefined;
+  } catch (err) {
+    return err;
+  }
 }

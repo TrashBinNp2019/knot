@@ -1,6 +1,6 @@
 import express from "express";
 import { createServer } from "http";
-import { Server, Socket } from "socket.io";
+import { Server } from "socket.io";
 import { crawlerConfig as config } from "../general/config/config_singleton.js";
 import { store } from "./state/store.js";
 import * as pausable from "./state/pausableSlice.js";
@@ -13,7 +13,7 @@ export const Events = {
   pause: 'pause',
 }
 
-class ServerWrapper {
+export class ServerWrapper {
   private prevState;
   
   constructor(io: Server) {
@@ -38,8 +38,10 @@ class ServerWrapper {
           break;
       }
       
-      io.emit(...args);
-      this.prevState = state;
+      if (args) {
+        io.emit(...args);
+        this.prevState = state;
+      }
     });
     
     io.on("connection", (socket) => {
@@ -72,6 +74,7 @@ export function init() {
 export function startExpress() {
   const app = express();
   
+  /* c8 ignore next 2 */
   app.use(express.static((process.env.NODE_ENV === 'dev' ? 'src' : 'build') + '/crawler/static'));
   app.use('/scripts', express.static(process.env.NODE_ENV === 'dev' ? 'src/general' : 'build/general/public'));
   
