@@ -113,16 +113,12 @@ function handleResults(results: PromiseSettledResult<{ res: AxiosResponse<any, a
 }
 
 function handleError(result: PromiseRejectedResult) {
-  // TODO treat err bad response as valid ? perhaphs
   const e = result.reason;
   if (e.code !== 'ECONNABORTED' &&
   e.code !== 'EADDRNOTAVAIL' &&
   e.code !== 'ENETUNREACH' &&
   e.code !== 'EHOSTUNREACH' &&
   e.code !== 'ECONNREFUSED') {
-    // if (e.code === 'ERR_BAD_RESPONSE') {
-    //   console.log(e);
-    // }
     log('Unusual error:', e.code);
   }
 }
@@ -132,8 +128,14 @@ function handleConnection(result: PromiseFulfilledResult<{
 }>, db: Client): string[] {
   let { target, res } = result.value;
   
-  const { host, links } = inspect(res, target, db);
-  log({ title: host.title, addr: host.addr, contents_length: host.contents.length, keywords_length: host.keywords.length });
+  const { host, links, imgs } = inspect(res, target, db);
+  log({ 
+    title: host.title, 
+    addr: host.addr, 
+    contents_length: host.contents.length, 
+    keywords_length: host.keywords.length, 
+    images_found: imgs.length,
+  });
   validated();
   return links;
 }
@@ -148,4 +150,3 @@ function validate(targets: string[]) {
 
 return targets;
 }
-

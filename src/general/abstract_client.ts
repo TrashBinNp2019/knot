@@ -13,6 +13,7 @@ export interface Client {
    * @param {Host} host The host to insert.
    */  
   push: (host: Host) => void;
+  pushImg: (img: Image) => void;
 }
 
 /**
@@ -42,5 +43,17 @@ export class Host {
     this.addr = addr;
     this.contents = contents;
     this.keywords = keywords;
+  }
+}
+
+export class Image {
+  src: string;
+  dsc: string;
+  addr: string;
+  
+  constructor(src: string, dsc: string, addr: string) {
+    this.src = src;
+    this.dsc = dsc;
+    this.addr = addr;
   }
 }

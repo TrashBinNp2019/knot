@@ -1,5 +1,5 @@
 import * as cheerio from 'cheerio';
-import { Client, Host } from '../general/abstract_client.js';
+import { Client, Host, Image } from '../general/abstract_client.js';
 import { crawlerConfig as config } from '../general/config/config_singleton.js';
 import { ifDefined, toAbsolute } from '../general/utils.js';
 import jsdom from 'jsdom';
@@ -26,13 +26,12 @@ const EMPTY_THRESHOLD = 15;
 export function inspect(
   res: { data: Buffer, headers: { [key: string]: string } }, 
   source: string, db?: Client 
-): { host:Host, links:string[] } {
+): { host: Host, links: string[], imgs: Image[] } {
   let $: cheerio.CheerioAPI;
   $ = load(res, source);
 
   let links = findLinks($, source);
-  
-  // TODO if source is IP addr, do reverse DNS
+  let imgs = getImages($, source);
   
   const host: Host = {
     title: getTitle($, source),
@@ -41,8 +40,11 @@ export function inspect(
     keywords: getKeywords(res.headers),
   }
 
-  db?.push(host);
-  return { host, links };
+  if (db) {
+    db.push(host);
+    imgs.forEach(db.pushImg);
+  }
+  return { host, links, imgs: getImages($, source) };
 }
 
 export function load(res: { data: Buffer, headers: { [key: string]: string } }, source: string) {
@@ -52,7 +54,11 @@ export function load(res: { data: Buffer, headers: { [key: string]: string } }, 
     $ = executeJS(res.data);
   }
   
-  if (res.headers['content-type'] !== undefined && !res.headers['content-type'].includes('text/html')) {
+  if (
+    res.headers['content-type'] !== undefined && 
+    !res.headers['content-type'].includes('text/html') &&
+    !res.headers['content-type'].includes('img/')) 
+  {
     throw new Error('Unknown content type: ' + res.headers['content-type']);
   }
   
@@ -107,6 +113,33 @@ export function isEmpty($: cheerio.CheerioAPI): boolean {
       return count < 0;
     }, 0) !== undefined;
   }) === undefined;
+}
+
+function getImages($: cheerio.CheerioAPI, source: string): Image[] {
+  let images = [];
+  $('img').each((ind, elem) => {
+    if (
+      $(elem).attr('src') === undefined || 
+      $(elem).attr('src').length === 0 || 
+      $(elem).attr('src').length > 255
+    ) 
+      return;
+
+    let src = toAbsolute($(elem).attr('src'), source);
+
+    let dsc = $(elem).attr('alt') ?? '';
+    dsc += $(elem).parent().attr('title') ?? '';
+    dsc += $(elem).parent().attr('alt') ?? '';
+    dsc += $(elem).parent().text() ?? '';
+
+    dsc = dsc.replace(/\s+/g, ' ');
+    dsc += ' ';
+    dsc = dsc.substring(0, 128);
+    dsc = dsc.substring(0, dsc.lastIndexOf(' '));
+
+    images.push({ src, dsc, addr: source });
+  }).get();
+  return images;
 }
 
 function getMetas($: cheerio.CheerioAPI) {
@@ -167,7 +200,6 @@ export function getTitle($: cheerio.CheerioAPI, source: string) {
   } else if (title.length > 100) {
     title = title.substring(0, 100) + '...';
   }
-  title = title.replace(/\s+/g, ' ');
 
-  return title;
+  return title.trim().replace(/\s+/g, ' ');
 }
