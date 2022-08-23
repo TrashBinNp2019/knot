@@ -12,7 +12,8 @@
     "build": "node src/build-tools/pre.js && echo Running tsc... & tsc && babel --presets @babel/preset-react src/page/static -d build/page/static & babel src/crawler/static -d build/crawler/static & babel src/general -d build/general & babel src/general -d build/general/public && node src/build-tools/post.js",
     "test": "npm run test-src && npm run test-build",
     "test-build": "mocha test/build/build.ts",
-    "test-src": "c8 tap test/src"
+    "test-src": "c8 tap test/src",
+    "coverage": "c8 --check-coverage --100 --all --src src/crawler --src src/general --exclude test/ --exclude src/general/abstract_client.ts --exclude src/crawler/main.ts --exclude src/crawler/static tap test/src"
   },
   "author": "",
   "license": "ISC",
