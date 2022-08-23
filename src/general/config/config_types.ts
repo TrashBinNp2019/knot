@@ -40,10 +40,10 @@ export class CrawlerConfig extends Writable implements Readable {
 
     this.request_timeout = to ?? 5000;
     this.targets_cap = parseInt(data.targets_cap, 10) || 1000;
-    this.use_web_interface = data.use_web_interface ?? true;
-    this.web_interface_port = parseInt(data.web_interface_port, 10) || 8080;
+    this.use_web_interface = data.use_web_interface ?? false;
+    this.web_interface_port = parseInt(data.web_interface_port, 10) || 8081;
     this.unsafe = data.unsafe ?? false;
-    this.log_to_console = data.log_to_console ?? true;
+    this.log_to_console = data.log_to_console ?? false;
     this.generate_random_targets = data.generate_random_targets ?? true;
   }
   
@@ -61,7 +61,8 @@ export class PageConfig extends Writable implements Readable {
   
   constructor(data: any) {
     super();
-    this.port = parseInt(data.port, 10) || 8080;
+    /* c8 ignore next */
+    this.port = parseInt(process.env.PORT, 10) || parseInt(data.port, 10) || 8080;
   }
   
   public static read(): PageConfig {
@@ -82,14 +83,13 @@ export class PostgresConfig extends Writable implements Readable {
   
   constructor(data: any) {
     super();
-    if (!allDefined(data, ['user', 'password', 'database']) || !allStrings(data, ['user', 'password', 'database'])) {
-      throw new Error('Invalid postgres config');
-    }
-    this.user = data.user;
-    this.password = data.password;
-    this.host = data.host ?? 'localhost';
+    
+    /* c8 ignore next 4 */
+    this.user = data.user ?? process.env.PG_USER ?? 'postgres';
+    this.password = data.password ?? process.env.PG_PASSWORD ?? 'postgres';
+    this.host = data.host ?? process.env.PG_HOST ?? 'localhost';
+    this.database = data.database ?? 'postgres';
     this.port = parseInt(data.port, 10) || 5432;
-    this.database = data.database;
   }
   
   public static read(): PostgresConfig {

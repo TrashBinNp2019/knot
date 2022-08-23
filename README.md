@@ -19,11 +19,13 @@ npm run build
 npm run test-build
 ```
 After that, visit _config_ directory for configurations.  
-> This package uses Postgres for storage. Unless _postgres-config.json_ is valid, **neither service will start**. See _postgres-config.json.example_ for reference.
+> This package uses Postgres for storage. Please make sure that information in _postgres-config.json_ is valid.
 
 # Usage
 
-Once package is built, crawler can be started with:
+## Standard
+
+Once package is built and postgres is available, crawler can be started with:
 ```
 npm run crawler
 ```
@@ -31,9 +33,19 @@ To view the results, start the search engine:
 ```
 npm run page
 ```
----
-Alternatively, you could run services without building, directly from the source code.
-However be prepred for **major** security and performance setbacks:
+
+## Docker
+
+Having docker insalled and running, execute:
+```
+docker compose up
+```
+Services will be available on ports 8080 and 8081.
+
+## Development mode
+
+You can run services without building, directly from the source code.
+However, be ready for various security and performance setbacks:
 ```
 npm run crawler-dev
 ```

@@ -105,10 +105,10 @@ tap.test('Cralwer', async t => {
   t.same(c, {
     request_timeout: 5000,
     targets_cap: 1000,
-    use_web_interface: true,
-    web_interface_port: 8080,
+    use_web_interface: false,
+    web_interface_port: 8081,
     unsafe: false,
-    log_to_console: true,
+    log_to_console: false,
     generate_random_targets: true,
   });
 
@@ -116,10 +116,10 @@ tap.test('Cralwer', async t => {
   t.same(c, {
     request_timeout: 5000,
     targets_cap: 1000,
-    use_web_interface: true,
-    web_interface_port: 8080,
+    use_web_interface: false,
+    web_interface_port: 8081,
     unsafe: false,
-    log_to_console: true,
+    log_to_console: false,
     generate_random_targets: true,
   });
 
@@ -137,7 +137,7 @@ tap.test('Cralwer', async t => {
     use_web_interface: false,
     web_interface_port: 8030,
     unsafe: true,
-    log_to_console: true,
+    log_to_console: false,
     generate_random_targets: false,
   });
 
@@ -146,10 +146,10 @@ tap.test('Cralwer', async t => {
   t.same(c, {
     request_timeout: 5000,
     targets_cap: 1000,
-    use_web_interface: true,
-    web_interface_port: 8080,
+    use_web_interface: false,
+    web_interface_port: 8081,
     unsafe: false,
-    log_to_console: true,
+    log_to_console: false,
     generate_random_targets: true,
   });
 
@@ -168,7 +168,7 @@ tap.test('Cralwer', async t => {
     use_web_interface: false,
     web_interface_port: 8030,
     unsafe: true,
-    log_to_console: true,
+    log_to_console: false,
     generate_random_targets: false,
   });
 
@@ -180,7 +180,7 @@ tap.test('Cralwer', async t => {
     use_web_interface: false,
     web_interface_port: 8030,
     unsafe: true,
-    log_to_console: true,
+    log_to_console: false,
     generate_random_targets: false,
   });
 });
@@ -206,35 +206,6 @@ tap.test('Page', async t => {
 });
 
 tap.test('Postgres', async t => {
-  t.throws(() => new types.PostgresConfig({
-    user: 'user',
-    password: 'password',
-  }), 'should error when database field is missing');
-  t.throws(() => new types.PostgresConfig({
-    user: 'user',
-    database: 'database',
-  }), 'should error when password field is missing');
-  t.throws(() => new types.PostgresConfig({
-    password: 'password',
-    database: 'database',
-  }), 'should error when user field is missing');
-
-  t.throws(() => new types.PostgresConfig({
-    user: 1,
-    password: 'password',
-    database: 'database',
-  }), 'should error when user field is not a string');
-  t.throws(() => new types.PostgresConfig({
-    user: 'user',
-    password: 1,
-    database: 'database',
-  }), 'should error when password field is not a string');
-  t.throws(() => new types.PostgresConfig({
-    user: 'user',
-    password: 'password',
-    database: 1,
-  }), 'should error when database field is not a string');
-
   let p = new types.PostgresConfig({
     user: 'user',
     password: 'password',

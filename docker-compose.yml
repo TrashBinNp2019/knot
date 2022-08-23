@@ -1,0 +1,26 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports: 
+      - '5432:5432'
+    volumes:
+      - addressbook-db:/var/lib/postgresql/data
+
+  knot:
+    build:
+      context: .
+    depends_on:
+      - postgres
+    environment:
+      PG_USER: postgres
+      PG_PASSWORD: postgres
+      PG_HOST: postgres
+    ports:
+      - '8080:${PORT:-8080}'
+        
+volumes:
+  addressbook-db:

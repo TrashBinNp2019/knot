@@ -10,14 +10,14 @@ const port = config().port;
 
 if (process.env.NODE_ENV !== 'dev') {
   app.use(helmet({
+    originAgentCluster: false,
+    crossOriginEmbedderPolicy: false,
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: [
           "'self'",
-          "'unsafe-inline'",
-          "https://unpkg.com/react@18/", 
-          "https://unpkg.com/react-dom@18/",
+          "https://unpkg.com/", 
         ],
       },
     }

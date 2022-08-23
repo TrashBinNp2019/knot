@@ -12,6 +12,8 @@ if (fs.existsSync('build/page/static/index.html')) {
     $('#react').removeAttr('id');
     $('#prep-string').removeAttr('type');
     $('#prep-string').removeAttr('id');
+    $('#store').removeAttr('type');
+    $('#store').removeAttr('id');
     $('#exports').remove();
     fsc.writeFile('build/page/static/index.html', $);
   });
