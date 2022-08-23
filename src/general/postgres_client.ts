@@ -72,6 +72,11 @@ export async function search(q: string) {
   return (await pool.query(query, ['% ' + prep.forSql(q) + ' %'])).rows;
 }
     
+export async function searchImg(q: string) {
+  let query = `SELECT src, dsc, addr FROM images WHERE dsc iLIKE $1`;
+  return (await pool.query(query, ['% ' + prep.forSql(q) + ' %'])).rows;
+}
+    
 async function createHostTable() {
   try {
     await pool.query(`CREATE TABLE hosts (
