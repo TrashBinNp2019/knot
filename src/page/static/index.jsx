@@ -1,140 +1,84 @@
-class Search extends React.Component {
-    // TODO search on enter, size limitation, more fun stuff
-    constructor(props) {
-        super(props);
-        this.state = {
-            val: ''
-        };
-    }
-
-    handleChange = (e) => {
-        this.setState({
-            val: forSql(e.target.value)
-        });
-    }
-
-    handleSubmit = (e) => {
-        e.preventDefault();
-        this.props.onSubmit(this.state.val);
-    }
-
-    render() {
-        return (
-            <div className="searchBox">
-                <input type="text" placeholder="Search" onChange={this.handleChange} value={this.state.val} />
-                <button onClick={this.handleSubmit}>Search</button>
-            </div>
-        );
-    }
+function Header(props) {
+  // TODO search on enter
+  
+  const query = ReactRedux.useSelector(state => state.general.query);
+  const dispatch = ReactRedux.useDispatch();
+  
+  return (
+    <div className="headerBox">
+      <input type="text" placeholder="Search" onChange={e => dispatch(update(e.target.value))} value={query} />
+      <button onClick={() => dispatch(search())}>Search</button>
+    </div>
+  );
 }
 
-class Results extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        const results = this.props.entries.map(el => {
-            return <Result title={el.title} addr={el.addr} content={el.content} keywords={el.keywords}/>
-        });
-        let { search, entries } = this.props;
-        search = forHtml(search);
-
-        return (
-            <div>
-                <p>Results for {search}:<br /> <i>{entries.length} entr{entries.length === 1? 'y' : 'ies'} found</i></p>
-                {results}
-            </div>
-        );
-    }
+function Pages(props) {
+  // TODO size limit
+  
+  const {results, query} = ReactRedux.useSelector(state => state.general, (a, b) => a.results === b.results);
+  
+  const pages = results.map(el => {
+    return <Page title={el.title} addr={el.addr} content={el.content} keywords={el.keywords}/>
+  });
+  search = forHtml(search);
+  
+  if (query.length === 0) {
+    return (<div />);
+  } else {
+    return (
+      <div>
+        <p>Results for {query}:<br /> <i>{pages.length} entr{pages.length === 1? 'y' : 'ies'} found</i></p>
+        {pages}
+      </div>
+    );
+  }
 }
 
-class Result extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        let { title, addr, content, keywords } = this.props;
-        title = forHtml(title);
-        addr = forHtml(addr);
-        content = forHtml(content);
-        keywords = forHtml(keywords);
-        
-        content = displayable(content, 50);
-        keywords = displayable(keywords, 20);
-
-        return (
-            <div className='resultBox'>
-                <a className="resultTitle" href={addr}>{title}</a>
-                <p className="resultContent">{content}</p>
-                <p className="resultKeywords"><i>{keywords}</i></p>
-            </div>
-        );
-    }
+function Page(props) {
+  let { title, addr, content, keywords } = props;
+  title = forHtml(title);
+  addr = forHtml(addr);
+  content = forHtml(content);
+  keywords = forHtml(keywords);
+  
+  content = displayable(content, 50);
+  keywords = displayable(keywords, 20);
+  
+  return (
+    <div className='resultBox'>
+      <a className="pageTitle" href={addr}>{title}</a>
+      <p className="pageContent">{content}</p>
+      <p className="pageKeywords"><i>{keywords}</i></p>
+    </div>
+  );
 }
 
-class App extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            search: '',
-            entries: [],
-        }
-    }
-
-    handleSearch = (val) => {
-        fetch('api/search?q=' + val)
-            .then(res => res.json())
-            .then(data => {
-                let entries = data.map(el =>
-                    ({
-                        title: el.title,
-                        addr: el.addr,
-                        content: el.contents,
-                        keywords: el.keywords,
-                    })
-                );
-
-                this.setState({
-                    search: val,
-                    entries: entries,
-                });
-            }).catch(err => {
-                console.log(err);
-            });
-    }
-
-    render() {
-        let results;
-        if (this.state.search !== '') {
-            results = <Results entries={this.state.entries} search={this.state.search} />
-        }
-
-        return (
-            <div>
-                <Search onSubmit={this.handleSearch}/>
-                {results}
-            </div>
-        );
-    }
+function App (props) {
+  return (
+    <div>
+        <Header/>
+        <Pages />
+    </div>
+  );
 }
 
 const rootNode = document.getElementById("app");
 const root = ReactDOM.createRoot(rootNode);
 root.render(
+  <Provider store={store}>
     <App />
+  </Provider>
 );
 
 function displayable(str, max_length) {
-    if (typeof str !== 'string') {
-        return '-';
-    }
-
-    if (str.length === 0) {
-        str = '-';
-    } else if (str.length > max_length) {
-        str = str.substring(0, max_length - 3) + '...';
-    }
-    return str;
+  if (typeof str !== 'string') {
+    return '-';
+  }
+  
+  if (str.length === 0) {
+    str = '-';
+  } else if (str.length > max_length) {
+    str = str.substring(0, max_length - 3) + '...';
+  }
+  return str;
 }

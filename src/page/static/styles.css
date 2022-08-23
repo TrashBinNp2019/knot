@@ -5,7 +5,7 @@
   margin: 10px 0;
 }
 
-.searchBox {
+.headerBox {
   background-color: #fff;
   padding: 10px;
   margin: 10px 0;
@@ -14,14 +14,14 @@
   justify-content: center;
 }
 
-.resultTitle {
+.pageTitle {
   text-decoration: solid;
   color: black;
   font-weight: bold;
   font-size: x-large;
 }
 
-.resultKeywords {
+.pageKeywords {
   margin-top: 0.5ex;
   font-size: smaller;
 }

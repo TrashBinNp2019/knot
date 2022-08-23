@@ -1,8 +1,8 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import * as db from '../general/postgres_client.js';
-import * as fs from 'fs';
 import helmet from 'helmet';
+import { api } from './routers/api.js';
+import * as db from '../general/postgres_client.js';
 import { pageConfig as config } from '../general/config/config_singleton.js';
 
 const app = express();
@@ -31,10 +31,7 @@ if (process.env.NODE_ENV !== 'dev') {
   app.use('/scripts', express.static('src/general'));
 }
 app.use(bodyParser.urlencoded({ extended: true }));
-
-app.get('/api/search', async (req, res) => {
-  res.send(JSON.stringify(await db.search(String(req.query.q))));
-});
+app.use('/api', api);
 
 db.test().then(err => {
   if (err) {
