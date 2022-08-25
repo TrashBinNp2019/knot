@@ -38,11 +38,12 @@ export class CrawlerConfig extends Writable implements Readable {
       store.dispatch(log(['Invalid request_timeout']));
     }
 
+    /* c8 ignore next */
+    this.unsafe = data.unsafe ?? process.env.UNSAFE ?? false;
     this.request_timeout = to ?? 5000;
     this.targets_cap = parseInt(data.targets_cap, 10) || 1000;
     this.use_web_interface = data.use_web_interface ?? false;
     this.web_interface_port = parseInt(data.web_interface_port, 10) || 8081;
-    this.unsafe = data.unsafe ?? false;
     this.log_to_console = data.log_to_console ?? false;
     this.generate_random_targets = data.generate_random_targets ?? true;
   }

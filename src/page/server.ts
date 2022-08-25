@@ -9,19 +9,22 @@ const app = express();
 const port = config().port;
 
 if (process.env.NODE_ENV !== 'dev') {
-  app.use(helmet({
-    originAgentCluster: false,
-    crossOriginEmbedderPolicy: false,
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: [
-          "'self'",
-          "https://unpkg.com/", 
-        ],
-      },
-    }
-  }));
+  /* c8 ignore next */
+  if (process.env.NO_HELMET !== 'true')
+    app.use(helmet({
+      originAgentCluster: false,
+      crossOriginEmbedderPolicy: false,
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "https://unpkg.com/", 
+          ],
+        },
+      }
+    }));
+  
   app.use(express.static('build/page/static'));
   app.use('/scripts', express.static('build/general/public'));
 } else {

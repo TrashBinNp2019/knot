@@ -8,19 +8,28 @@ services:
     ports: 
       - '5432:5432'
     volumes:
-      - addressbook-db:/var/lib/postgresql/data
+      - db:/var/lib/postgresql/data
 
-  knot:
+  knot-crawler:
     build:
       context: .
+      dockerfile: images/crawler/Dockerfile
+    environment:
+      PG_HOST: postgres
     depends_on:
       - postgres
+
+  knot-view:
+    build:
+      context: .
+      dockerfile: images/view/Dockerfile
     environment:
-      PG_USER: postgres
-      PG_PASSWORD: postgres
       PG_HOST: postgres
+    depends_on:
+      - postgres
     ports:
       - '8080:${PORT:-8080}'
+
         
 volumes:
-  addressbook-db:
+  db:

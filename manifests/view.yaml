@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: view-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: knot-view
+  template:
+    metadata:
+      labels:
+        app: knot-view
+    spec:
+      containers:
+        - name: node-knot-view
+          image: headgardener/knot-view:1.0.0
+          env:
+          - name: PG_HOST
+            value: "postgres"
