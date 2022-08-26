@@ -118,7 +118,8 @@ tap.test('Bot should inspect visited pages correctly', async t => {
     test: async () => { return undefined },
     push: (host) => {
       inspected.push(host.addr);
-    }
+    },
+    pushImg: () => {},
   }
   
   await engine.generate({ 

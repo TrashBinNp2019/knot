@@ -34,7 +34,7 @@ export function parseTime(val: any): number | undefined {
   return undefined;
 }
 
-async function reverseAddr(source: string) {
+export async function reverseAddr(source: string) {
   let match = source.match(IPv4);
   if (match && match[0]) {
     try {

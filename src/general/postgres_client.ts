@@ -7,11 +7,13 @@ const { Pool } = pg;
 const pool = new Pool(config().writeExcluded());
 
 export async function test() {
+  let error = undefined;
+
   try {
     await pool.query('SELECT title, addr, contents, keywords FROM hosts');
   } catch (err) {
     if (err.code === '42P01') {
-      createHostTable();
+      error = await createHostTable();
     } else {
       err.message = '(hosts) ' + err.message;
       return err;
@@ -22,14 +24,14 @@ export async function test() {
     await pool.query('SELECT addr, src, dsc FROM images');
   } catch (err) {
     if (err.code === '42P01') {
-      createImageTable();
+      error = error ?? await createImageTable();
     } else {
       err.message = '(images) ' + err.message;
       return err;
     }
   }
 
-  return undefined;
+  return error;
 }
 
 export function push(host: Host) {

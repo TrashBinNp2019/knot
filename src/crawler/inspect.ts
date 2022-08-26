@@ -115,7 +115,7 @@ export function isEmpty($: cheerio.CheerioAPI): boolean {
   }) === undefined;
 }
 
-function getImages($: cheerio.CheerioAPI, source: string): Image[] {
+export function getImages($: cheerio.CheerioAPI, source: string): Image[] {
   let images = [];
   $('img').each((ind, elem) => {
     if (
@@ -127,15 +127,15 @@ function getImages($: cheerio.CheerioAPI, source: string): Image[] {
 
     let src = toAbsolute($(elem).attr('src'), source);
 
-    let dsc = $(elem).attr('alt') ?? '';
-    dsc += $(elem).parent().attr('title') ?? '';
-    dsc += $(elem).parent().attr('alt') ?? '';
-    dsc += $(elem).parent().text() ?? '';
+    let dsc = $(elem).attr('alt') ?? ''; dsc += ' ';
+    dsc += $(elem).attr('title') ?? ''; dsc += ' ';
+    dsc += $(elem).parent().attr('title') ?? ''; dsc += ' ';
+    dsc += $(elem).parent().attr('alt') ?? ''; dsc += ' ';
+    /* c8 ignore next */
+    dsc += $(elem).parent().text() ?? ''; dsc += ' ';
 
     dsc = dsc.replace(/\s+/g, ' ');
-    dsc += ' ';
-    dsc = dsc.substring(0, 128);
-    dsc = dsc.substring(0, dsc.lastIndexOf(' '));
+    dsc = dsc.substring(0, 128).substring(0, dsc.lastIndexOf(' ')).trim();
 
     images.push({ src, dsc, addr: source });
   }).get();

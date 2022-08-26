@@ -1,7 +1,30 @@
-import tap from 'tap';
-import * as utils from '../../../src/general/utils.js';
+import * as tap from 'tap';
+import esmock from 'esmock';
+const utils = await esmock(
+  '../../../src/general/utils.ts', 
+{
+    'dns': {
+      'promises': {
+        'reverse': async (ip: string) => {
+          if (ip.includes('0')) {
+            throw new Error('dns error');
+          } else {
+            return ['test.com'];
+          }
+        }
+      }
+    }
+  }
+  );
 
 const IPv4 = /^((1?\d{1,2}|2[0-4]\d|25[0-5])\.){3}(1?\d{1,2}|2[0-4]\d|25[0-5])$/;
+
+tap.test('reverseAddr', async t => {
+  t.equal(await utils.reverseAddr('invalid'), 'invalid');
+  t.equal(await utils.reverseAddr('http://1.1.1.1'), 'https://test.com');
+  t.equal(await utils.reverseAddr('1.1.1.1'), 'https://test.com');
+  t.equal(await utils.reverseAddr('1.1.1.0'), '1.1.1.0');
+});
 
 tap.test('generateIps', async t => {
   let ips = utils.generateIps(3);
@@ -62,6 +85,7 @@ tap.test('ifDefined', async t => {
 });
 
 tap.test('calculatePerMinute', async t => {
+  t.equal(utils.calculatePerMinute(60000, 1).rate, 1);
   t.equal(utils.calculatePerMinute(100, 1).rate, 600);
   t.equal(utils.calculatePerMinute(100, 2).rate, 1200);
   t.equal(utils.calculatePerMinute(0, 1).rate, 6000);
