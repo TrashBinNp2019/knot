@@ -19,14 +19,14 @@ const generalStatsSlice = createSlice({
       state.valid_total += action.payload.count;
     },
     examined(state, action) {
-      const { rate, update } = update_pm(state.examined_prev - Number(new Date()), action.payload.count);
+      const { rate, update } = update_pm(action.payload.count, Date.now() -  state.examined_prev);
       state.examined_total += action.payload.count;
       state.examined_pm = rate;
       update_pm = update;
-      state.examined_prev = Number(new Date());
+      state.examined_prev = Date.now();
     },
     resetTime(state, action) {
-      state.examined_prev = Number(new Date());
+      state.examined_prev = Date.now();
     },
     log(state, action) {
       state.message = stringifyLogs(Number(new Date()), ...action.payload);

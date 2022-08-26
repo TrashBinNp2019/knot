@@ -1,3 +1,7 @@
+import { promises as dns } from 'dns';
+
+const IPv4 = /((1?\d{1,2}|2[0-4]\d|25[0-5])\.){3}(1?\d{1,2}|2[0-4]\d|25[0-5])/;
+
 /**
  * If arg is defined call the callback with arg, but curried
  */
@@ -28,6 +32,19 @@ export function parseTime(val: any): number | undefined {
   }
   
   return undefined;
+}
+
+export async function reverseAddr(source: string) {
+  let match = source.match(IPv4);
+  if (match && match[0]) {
+    try {
+      let host = await dns.reverse(match[0]);
+      if (host.length === 1) {
+        return 'https://' + host[0];
+      }
+    } catch (e) { }
+  }
+  return source;
 }
 
 // TODO add suport for "1m 30s"

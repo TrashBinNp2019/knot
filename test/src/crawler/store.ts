@@ -35,14 +35,21 @@ tap.test('general/valid rep', t => {
 
 tap.test('general/examined', t => {
   let unsub = store.subscribe(() => {
+    let after = Date.now()
     t.equal(store.getState().general.examined_total, 17);
-    t.ok(store.getState().general.examined_prev > Date.now() - 200);
-    t.ok(store.getState().general.examined_prev < Date.now() + 200);
+    t.ok(store.getState().general.examined_prev > after - 200);
+    t.ok(store.getState().general.examined_prev < after + 200);
+    let expected = 60000 * 17 / ((after - before) || 1);
+    // can fail if execution is too slow
+    t.ok(store.getState().general.examined_pm < (expected * 5));
+    t.ok(store.getState().general.examined_pm > (expected * 0.2));
+    
     t.not(store.getState().general.examined_pm, 0);
     unsub();
     t.end();
   });
 
+  let before = Date.now();
   store.dispatch(general.examined({ count: 17 }));
 });
 

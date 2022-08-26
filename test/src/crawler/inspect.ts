@@ -1,7 +1,7 @@
 import tap from 'tap';
 import fs from 'fs';
 import * as cheerio from 'cheerio';
-import { Host } from '../../../src/general/abstract_client.js';
+import { Host, Image } from '../../../src/general/abstract_client.js';
 import esmock from 'esmock';
 const inspect = await esmock(
   '../../../src/crawler/inspect.ts',
@@ -21,6 +21,19 @@ function reset() {
 }
 reset()
 
+
+tap.test('getImages', async t => {
+  reset();
+  $('body').append(`<img src="${'1'.repeat(256)}" alt="Invalid" />`);
+
+  let addr = 'http://example.com/subdir/page';
+  t.same(inspect.getImages($, addr), [
+    { src: 'http://localhost/image', dsc: 'Logo images', addr },
+    { src: 'http://example.com/subdir/image2', dsc: 'Logo2 images', addr },
+    { src: 'http://example.com/subdir/image3', dsc: 'Title Parent title', addr },
+    { src: 'http://example.com/subdir/image4', dsc: 'Parent', addr },
+  ]);
+});
 
 tap.test('getTitle', async (t) => {
   $('head').append('<title>Head Title</title>');
@@ -61,11 +74,15 @@ tap.test('isEmpty', async t => {
 
 tap.test('Inspect plain HTML and extract links', async t => {
   let received:Host | undefined = undefined;
+  let images: Image[] = [];
   let db = {
     test: async () => undefined,
     push: (host:Host) => {
       received = host;
-    }
+    },
+    pushImg: (img: Image) => {
+      images.push(img);
+    },
   };
   let target = 'http://localhost/subdir/page.html';
   
