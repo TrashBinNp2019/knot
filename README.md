@@ -60,7 +60,7 @@ npm run page-dev
 - Integrate more well-developed libraries for code quality:
   - ~~Redux~~
   - Prisma
-- Add support for other media (images, etc.)
+- ~~Add support for other media (images)~~
 - Efficiently compress pages
 - Optimise bandwidth usage by interfaces
 - Find something cool with this

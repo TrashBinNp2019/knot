@@ -40,9 +40,7 @@ tap.test('general/examined', t => {
     t.ok(store.getState().general.examined_prev > after - 200);
     t.ok(store.getState().general.examined_prev < after + 200);
     let expected = 60000 * 17 / ((after - before) || 1);
-    // can fail if execution is too slow
-    t.ok(store.getState().general.examined_pm < (expected * 5));
-    t.ok(store.getState().general.examined_pm > (expected * 0.2));
+    t.ok(store.getState().general.examined_pm < (expected * 4));
     
     t.not(store.getState().general.examined_pm, 0);
     unsub();
