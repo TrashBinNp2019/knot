@@ -57,10 +57,8 @@ npm run page-dev
 # Roadmap
 
 - ~~Reach and retain 100% coverage on engine code~~
-- Integrate more well-developed libraries for code quality:
+- ~~Integrate more well-developed libraries for code quality:~~
   - ~~Redux~~
-  - Prisma
 - ~~Add support for other media (images)~~
-- Efficiently compress pages
-- Optimise bandwidth usage by interfaces
+- ~~Optimise bandwidth usage by interfaces~~
 - Find something cool with this

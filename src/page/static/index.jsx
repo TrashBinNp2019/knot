@@ -1,7 +1,7 @@
 function Header(props) {
   // TODO search on enter
   
-  const {query, mode} = ReactRedux.useSelector(state => state.general);
+  const {query, mode, total} = ReactRedux.useSelector(state => state.general);
   const dispatch = ReactRedux.useDispatch();
 
   let modes = ['pages', 'images'].map(val => 
@@ -11,10 +11,13 @@ function Header(props) {
   return (
     <div className="headerWrapper"> 
       <div className="headerBox">
-        <input type="text" placeholder="Search" onChange={e => dispatch(update(e.target.value))} value={query} />
-        <button onClick={() => dispatch(search())}>Search</button>
+        <div className="inputWrapper">
+          <input type="text" placeholder="Search" onChange={e => dispatch(update(e.target.value))} value={query} />
+          <button onClick={() => dispatch(search())}>Search</button>
+        </div>
         <div className="modeBox">  
           {modes}
+          <a className="totalLabel"><span id="total">{total}</span> entries total</a>
         </div>
       </div>
     </div>
@@ -22,19 +25,17 @@ function Header(props) {
 }
 
 function Results(props) {
-  // TODO size limit
-  
   const {results, query, mode} = ReactRedux.useSelector(state => state.general, (a, b) => a.results === b.results);
   
   let displayed = [];
   switch (mode) {
     case 'pages':
-      displayed = results.map(el => 
+      displayed = results.rows.map(el => 
         <Page title={el.title} addr={el.addr} content={el.content} keywords={el.keywords}/>
       );
       break
     case 'images':
-      displayed = results.map(el =>
+      displayed = results.rows.map(el =>
         <Image title={el.title} addr={el.addr} content={el.content}/>
       );
       break;
@@ -46,7 +47,7 @@ function Results(props) {
     return (
       <div className="resultsWrapper">
         <div className="resultsBox">
-          <p>Results for {forHtml(query)}:<br /> <i>{displayed.length} entr{displayed.length === 1? 'y' : 'ies'} found</i></p>
+          <p>Results for {forHtml(query)}:<br /> <i>{results.count} entr{results.count === 1? 'y' : 'ies'} found</i></p>
           {displayed}
         </div>
       </div>
@@ -84,11 +85,27 @@ function Image(props) {
   );
 }
 
+function Loader (props) {
+  const {count, rows} = ReactRedux.useSelector(state => state.general).results;
+  const dispatch = ReactRedux.useDispatch();
+  
+  if (rows.length < count) {
+    return (
+      <div className="loaderWrapper"> 
+        <button className="loader" onClick={() => {dispatch(load())}}>Load more</button>
+      </div>
+    );
+  } else {
+    return <div />;
+  }
+}
+
 function App (props) {
   return (
     <div>
         <Header/>
         <Results />
+        <Loader />
     </div>
   );
 }

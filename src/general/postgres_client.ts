@@ -68,15 +68,33 @@ export function pushImg(img: Image) {
 export async function get() {
   return (await pool.query('SELECT title, addr FROM hosts')).rows;
 }
-    
-export async function search(q: string) {
-  let query = `SELECT title, addr, contents, keywords FROM hosts WHERE title iLIKE $1 OR contents iLIKE $1`;
-  return (await pool.query(query, ['% ' + prep.forSql(q) + ' %'])).rows;
+
+export async function count() {
+  return (await pool.query('SELECT COUNT(*) FROM hosts')).rows[0].count;
+}
+
+export async function countImg() {
+  return (await pool.query('SELECT COUNT(*) FROM images')).rows[0].count;
+}
+
+export async function countSearch(q: string) {
+  let query = `SELECT COUNT(*) FROM hosts WHERE title iLIKE $1 OR contents iLIKE $1 OR keywords iLIKE $1`;
+  return (await pool.query(query, [`% ${prep.forSql(q)} %`])).rows[0].count;
+}
+
+export async function countSearchImg(q: string) {
+  let query = `SELECT COUNT(*) FROM images WHERE dsc iLIKE $1`;
+  return (await pool.query(query, [`% ${prep.forSql(q)} %`])).rows[0].count;
 }
     
-export async function searchImg(q: string) {
-  let query = `SELECT src, dsc, addr FROM images WHERE dsc iLIKE $1`;
-  return (await pool.query(query, ['% ' + prep.forSql(q) + ' %'])).rows;
+export async function search(q: string, page: number) {
+  let query = `SELECT title, addr, contents, keywords FROM hosts WHERE title iLIKE $1 OR contents iLIKE $1 OR keywords iLIKE $1 LIMIT 10 OFFSET ${(page - 1) * 10}`;
+  return (await pool.query(query, [`% ${prep.forSql(q)} %`])).rows;
+}
+    
+export async function searchImg(q: string, page: number) {
+  let query = `SELECT src, dsc, addr FROM images WHERE dsc iLIKE $1 LIMIT 10 OFFSET ${(page - 1) * 10}`;
+  return (await pool.query(query, [`% ${prep.forSql(q)} %`])).rows;
 }
     
 async function createHostTable() {

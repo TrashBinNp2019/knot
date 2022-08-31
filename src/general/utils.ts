@@ -132,7 +132,6 @@ export function generateIps(count: number): string[] {
   );
 }
 
-// TODO improve this to 1) ignore small differences and 2) use a rolling average
 export function calculatePerMinute(diff: number, count: number) {
   let rate = count / Math.max(diff, 10) * 1000 * 60;
   return { 

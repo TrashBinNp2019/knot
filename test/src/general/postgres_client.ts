@@ -169,3 +169,28 @@ tap.test('Push image', async t => {
   });
   t.equal(queries[queries.length - 1].match(/1/g)?.length, 128 + 128 + 128, 'should trim input');
 });
+
+tap.test('Count', async t => {
+  response = [{ count: 10 }];
+  t.equal(await client.count(), 10);
+  t.match(queries[queries.length - 1], /^SELECT COUNT\(.*?\) FROM hosts$/);
+});
+
+tap.test('Count images', async t => {
+  response = [{ count: 10 }];
+  t.equal(await client.countImg(), 10);
+  t.match(queries[queries.length - 1], /^SELECT COUNT\(.*?\) FROM images$/);
+});
+
+tap.test('Count-search', async t => {
+  response = [{count: 4}];
+  t.equal(await client.countSearch('test'), 4);
+  t.match(queries[queries.length - 1], /^SELECT COUNT\(\*\) FROM hosts WHERE .*? iLIKE test/);
+});
+
+tap.test('Count-search images', async t => {
+  response = [{count: 4}];
+  t.equal(await client.countSearchImg('test'), 4);
+  t.match(queries[queries.length - 1], /^SELECT COUNT\(\*\) FROM images WHERE .*? iLIKE test/);
+});
+

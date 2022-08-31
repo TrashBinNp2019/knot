@@ -8,7 +8,8 @@
 }
 
 .modeBox {
-  margin-top: 1ex;
+  display: flex;
+  margin-top: 1.2ex;
 }
 
 .mode {
@@ -23,6 +24,11 @@
 
 .modeInactive {
   color: #888;
+}
+
+.totalLabel {
+  color: #888;
+  margin-left: auto;
 }
 
 .resultBox {
@@ -65,4 +71,15 @@
 .pageKeywords {
   margin-top: 0.5ex;
   font-size: smaller;
+}
+
+.loaderWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.loader {
+  user-select: none;
+  margin-top: 1ex;
+  background-color: #eee;
 }

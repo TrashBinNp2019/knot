@@ -15,8 +15,6 @@ $(document).ready(function() {
     }
   }
 
-  // TODO more stats!
-
   $('.logs').append("<li>Loading...</li>");
 
   const socket = io();

@@ -7,7 +7,6 @@ import * as tap from 'tap';
  * @returns File names in the directory, including subdirectories
  */
 const readDirSync = (dir) => {
-  // TODO redo as async
   let output = [];
   fs.readdirSync(dir, { withFileTypes: true }).forEach(file => {
     if (file.isFile()) {
@@ -18,8 +17,6 @@ const readDirSync = (dir) => {
   });
   return output;
 };
-
-// TODO compress stuff and test it
 
 tap.test('crawler dir should be intact', async t => {
   let expected = readDirSync('src/crawler');
